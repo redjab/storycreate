@@ -1,0 +1,10 @@
+{
+  "name": "storycreate",
+  "dependencies": {
+    "jquery": "^2.1.4",
+    "bootstrap": "^3.3.5",
+    "bootswatch-dist": "^3.3.5-united",
+    "magnific-popup": "^1.0.0",
+    "toastr": "^2.1.1"
+  },
+}
