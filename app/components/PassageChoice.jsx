@@ -13,7 +13,7 @@ function PassageChoice(x, y, width, height, label, text){
         size: { width: width, height: height },
         label: label,
         text: text,
-        attrs: {type: 'input'}
+        attrs: {innerType: {typeText : 'input'} }
     });
     this.choices = [];
     var choicePositionX = x;
