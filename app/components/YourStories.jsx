@@ -1,26 +1,26 @@
 import React from 'react';
 import { Link } from 'react-router';
-
-var stories = [
-	{
-		id: 1,
-		title: "Spice and Wolf",
-		description: "A travelling merchant meets a wolf-deity",
-		lastupdated: "2016-01-01",
-		passagesCount: 10,
-	},
-	{
-		id: 2,
-		title: "Save the date!",
-		description: "It’s a perfectly normal evening, and you have a quiet dinner planned with one of your friends",
-		lastupdated: "2016-01-01",
-		passagesCount: 20,
-	}
-];
+import YourStoriesStore from '../stores/YourStoriesStore';
+import YourStoriesActions from '../actions/YourStoriesActions';
 
 class YourStories extends React.Component {
 	constructor (props){
 		super(props);
+		this.state = YourStoriesStore.getState();
+		this.onChange = this.onChange.bind(this);
+	}
+
+	componentDidMount(){
+		YourStoriesStore.listen(this.onChange);
+		YourStoriesActions.getStories();
+	}
+
+	componentWillUnmount(){
+		YourStoriesStore.unlisten(this.onChange);
+	}
+
+	onChange(state) {
+		this.setState(state);
 	}
 
 	populateStories (data){
@@ -52,7 +52,7 @@ class YourStories extends React.Component {
 			<div className='main-content container'>
 				<h1>Your Stories</h1>
 				<p>Sort by: <strong>Name</strong> | Edit Date | Passages Count</p>
-				{this.populateStories(stories)}
+				{this.populateStories(this.state.stories)}
 			</div>
 		)
 	}

@@ -3,8 +3,13 @@
   "dependencies": {
     "jquery": "^2.1.4",
     "bootstrap": "^3.3.5",
-    "bootswatch-dist": "^3.3.5-united",
+    "bootswatch-dist": "united",
     "magnific-popup": "^1.0.0",
-    "toastr": "^2.1.1"
+    "toastr": "^2.1.1",
+    "jointjs": "~0.9.7"
   },
+  "resolutions": {
+    "jquery": "^2.1.4",
+    "bootswatch-dist": "united"
+  }
 }

@@ -1,52 +1,27 @@
 import React from 'react';
 import {Link} from 'react-router';
-
-
-var featured = [
-  {
-    id: 1,
-    title: "Spice and Wolf",
-    description: "A travelling merchant meets a wolf-deity"
-  },
-  {
-    id: 2,
-    title: "Save the date!",
-    description: "It’s a perfectly normal evening, and you have a quiet dinner planned with one of your friends"
-  }
-]
-
-var categories = [
-  {
-    id: 1,
-    name: "Fantasy"
-  },
-  {
-    id: 2,
-    name: "Science Fiction"
-  },
-  {
-    id: 3,
-    name: "Thriller"
-  },
-  {
-    id: 4,
-    name: "Mystery"
-  },
-  {
-    id: 5,
-    name: "Horror"
-  }
-]
+import ReadListStore from '../stores/ReadListStore';
+import ReadListActions from '../actions/ReadListActions';
 
 class ReadList extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      featured: featured,
-      toprated: featured,
-      mostrecent: featured,
-      categories: categories,
-    }
+    this.state = ReadListStore.getState();
+    this.onChange = this.onChange.bind(this);
+  }
+
+  onChange(state) {
+    this.setState(state);
+  }
+
+  componentDidMount(){
+    ReadListStore.listen(this.onChange);
+    ReadListActions.getStories();
+    ReadListActions.getCategories();
+  }
+
+  componentWillUnmount(){
+    ReadListStore.unlisten(this.onChange);
   }
 
   populateStoryList(data){
@@ -70,7 +45,6 @@ class ReadList extends React.Component {
   }
 
   render() {
-    this.populateStoryList(this.state.featured);
     return (
         <div className='main-content container'>
           <h1>Read stories made with StoryCreate</h1>
@@ -78,17 +52,17 @@ class ReadList extends React.Component {
           <div className="row">
             <div className="col-md-6">
               <h2>Featured</h2>
-              {this.populateStoryList(this.state.featured)}
+              {this.populateStoryList(this.state.stories)}
             </div>
             <div className="col-md-6">
               <h2>Top Rated</h2>
-              {this.populateStoryList(this.state.toprated)}
+              {this.populateStoryList(this.state.stories)}
             </div>
           </div>
           <div className="row">
             <div className="col-md-6">
               <h2>Most Recent</h2>
-              {this.populateStoryList(this.state.mostrecent)}
+              {this.populateStoryList(this.state.stories)}
             </div>
             <div className="col-md-6">
               <h2>Categories</h2>

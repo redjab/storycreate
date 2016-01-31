@@ -1,6 +1,10 @@
 @import (less) '../../bower_components/bootswatch-dist/css/bootstrap.css';
 @import '../../bower_components/toastr/toastr';
 @import (less) '../../bower_components/magnific-popup/dist/magnific-popup.css';
+@import (reference) '../../bower_components/bootstrap/less/mixins/buttons.less';
+@import (reference) './write.less';
+@import (less) '../../bower_components/jointjs/joint.css';
+
 html {
   position: relative;
   min-height: 100%;
@@ -79,4 +83,112 @@ footer a {
 
 .no-bottom-margin {
   margin-bottom: 0px;
+}
+
+.container-box {
+    padding: 10px 15px 10px;
+    border-color: #e5e5e5 #eee #eee;
+    border-style: solid;
+    border-width: 1px;
+}
+
+@btn-blue-color: #4e69a2;
+@btn-light-blue-color: #55acee;
+@btn-red-color: #d73d32;
+
+.btn-blue {
+  .button-variant(@btn-blue-color; @btn-blue-color; @btn-blue-color);
+  color: white !important;
+}
+
+.btn-light-blue {
+  .button-variant(@btn-light-blue-color; @btn-light-blue-color; @btn-light-blue-color);
+  color: white !important;
+}
+
+.btn-red {
+  .button-variant(@btn-red-color; @btn-red-color; @btn-red-color);
+  color: white !important;
+}
+
+
+#paper {
+   position: relative;
+   border: 1px solid gray;
+   display: inline-block;
+   background: transparent;
+   overflow: hidden;
+}
+#paper svg {
+   background: transparent;
+}
+#paper svg .link {
+   z-index: 2;
+}
+.html-element {
+   position: absolute;
+   background: #ffffff;
+   /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
+   pointer-events: none;
+   -webkit-user-select: none;
+   border: 1px solid #000000;
+   padding: 5px;
+   box-sizing: border-box;
+   z-index: 2;
+}
+.html-element button {
+   /* Enable interacting with inputs only. */
+   pointer-events: auto;   
+}
+.html-element button.delete {
+    border: none;
+    width: 20px;
+    height: 20px;
+    text-align: middle;
+    position: absolute;
+    left: 80%;
+    padding: 0;
+    margin: 0;
+    font-weight: bold;
+    cursor: pointer;
+ }
+.html-element button.delete:hover {
+   width: 20px;
+   height: 20px;
+   line-height: 20px;
+}
+.html-element select {
+   position: absolute;
+   right: 2px;
+   bottom: 28px;
+}
+.html-element input {
+   position: absolute;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   border: none;
+   color: #333;
+   padding: 5px;
+   height: 16px;
+}
+.html-element label {
+   color: black;
+   font-weight: bold;
+}
+.html-element span {
+   position: absolute;
+   top: 2px;
+   right: 9px;
+   color: white;
+   font-size: 10px;
+}
+
+.html-element hr {
+   margin-top: 0px;
+   margin-bottom: 0px;
+}
+
+.html-element p {
+  word-wrap: break-word;
 }

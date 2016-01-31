@@ -17,7 +17,7 @@ class Home extends React.Component {
             </div>
 
             <div className='btn-group-vertical pull-right'>
-              <Link className='btn btn-primary banner-button-first' to='/new'>Create Story</Link>
+              <Link className='btn btn-primary banner-button-first' to='/write'>Create Story</Link>
               <Link className='btn btn-primary banner-button' to='/yours'>Your Stories</Link>
               <Link className='btn btn-primary banner-button' to='/tutorial'>Getting Started</Link>
             </div>

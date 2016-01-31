@@ -24,7 +24,6 @@ class Navbar extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    console.log("test");
     let searchQuery = this.state.searchQuery.trim();
 
     if (searchQuery) {
@@ -58,7 +57,7 @@ class Navbar extends React.Component {
               <li className='dropdown'>
                 <a href='#' className='dropdown-toggle' data-toggle='dropdown'>Write <span className='caret'></span></a>
                 <ul className='dropdown-menu'>
-                  <li><Link to='/new'>Create Story</Link></li>
+                  <li><Link to='/write'>Create Story</Link></li>
                   <li><Link to='/yours'>Your Stories</Link></li>
                 </ul>
               </li>

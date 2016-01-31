@@ -120,3 +120,59 @@ gulp.task('watch', function() {
 
 gulp.task('default', ['styles', 'vendor', 'browserify-watch', 'watch']);
 gulp.task('build', ['styles', 'vendor', 'browserify']);
+
+/*
+-----------------------------------------------------------------------------
+*/
+
+var sourceFile = './app/components/Graph.js';
+var destFolder = './public/js/write';
+var destFile = 'bundle-write.js';
+var notify = require('gulp-notify');
+
+var handleError = function(err) {
+    notify.onError({
+        message: "<%= error.message %>"
+    }).apply(this, arguments);
+
+    this.emit('end');
+};
+
+
+var writeBrowserifyConfig = {
+    debug:true,
+}
+
+gulp.task('vendor-write', function() {
+  return gulp.src([
+    'bower_components/jquery/dist/jquery.js',
+    'bower_components/bootstrap/dist/js/bootstrap.js'
+  ]).pipe(concat('vendor-write.js'))
+    .pipe(gulpif(production, uglify({ mangle: false })))
+    .pipe(gulp.dest(destFolder));
+});
+
+
+gulp.task('browserify-write', function() {
+  return browserify(sourceFile, writeBrowserifyConfig)
+  .bundle()
+  .on('error', handleError)
+  .pipe(source(destFile))
+  .pipe(gulp.dest(destFolder));
+});
+
+gulp.task('watch-write', function() {
+  var bundler = watchify(browserify(sourceFile, writeBrowserifyConfig));
+  bundler.on('update', rebundle);
+
+  function rebundle() {
+    return bundler.bundle()
+      .on('error', handleError)
+      .pipe(source(destFile))
+      .pipe(gulp.dest(destFolder));
+  }
+
+  return rebundle();
+});
+
+gulp.task('write', ['vendor-write', 'browserify-write', 'watch-write']);

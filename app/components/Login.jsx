@@ -1,9 +1,21 @@
 import React from 'react';
 import { Link } from 'react-router';
 
-class Register extends React.Component {
+class Login extends React.Component {
   handleSubmit(event) {
     	event.preventDefault();
+	}
+
+	facebookLogin(){
+
+	}
+
+	twitterLogin(){
+
+	}
+
+	googleLogin(){
+
 	}
 
 	render() {
@@ -12,7 +24,7 @@ class Register extends React.Component {
 				<div className='col-md-6 col-md-offset-3'>
 
 					<div className='container-box'>
-						<h1 className='text-center'>Register a New Account</h1>
+						<h1 className='text-center'>Login</h1>
 			      <form onSubmit={this.handleSubmit.bind(this)}>
 				      <div className='form-group'>
 						    <label>Email address</label>
@@ -22,21 +34,24 @@ class Register extends React.Component {
 						    <label>Password</label>
 						    <input type="password" name="password1" className="form-control" placeholder="Password" />
 				      </div>
-				      <div className='form-group'>
-						    <label>Retype Password</label>
-						    <input type="password" name="password2" className="form-control" placeholder="Password" />
-				      </div>
-		          <button className='btn btn-primary btn-block' onClick={this.handleSubmit.bind(this)}>Create</button>
+		          <button className='btn btn-primary btn-block' onClick={this.handleSubmit.bind(this)}>Login</button>
 			      </form>
 					</div>
 					<br/>
 					<div className='container-box text-center'>
-						<p>Or <Link to='/login'>login</Link> with Facebook, Google+, or Twitter</p>
+						<h3>Or login with your social media account</h3>
+		          <button className='btn btn-blue btn-block' onClick={this.facebookLogin.bind(this)}>Facebook</button>
+		          <button className='btn btn-light-blue btn-block' onClick={this.twitterLogin.bind(this)}>Twitter</button>
+		          <button className='btn btn-red btn-block' onClick={this.googleLogin.bind(this)}>Google+</button>
 		      </div>
+          <br/>
+          <div className='container-box text-center'>
+            <p>Or <Link to='/register'>register</Link> a new account!</p>
+          </div>
 				</div>
 			</div>
 		)
 	}
 }
 
-export default Register;
+export default Login;
