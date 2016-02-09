@@ -84,28 +84,24 @@ class Graph extends React.Component {
 
         graph.addCells([PassageChoice1.passage, PassageChoice1.choice]);
 
-        //keep track which choices falls under which passage
-        this.choicePassage[PassageChoice1.choice.id] = PassageChoice1.passage.id;
-
         //add new choice to storyData
-        var passage = _.find(this.storyData.content.passages, { 'id': PassageChoice1.passage.id });
-        passage.choices = [];
         var newChoice = {
                             "id": PassageChoice1.choice.id,
                             "text": Constants.DEFAULT_CHOICE,
                             "linkTo": []
                         }
-
-        passage.choices.push(newChoice);
+        this.addNewChoiceToStoryData(PassageChoice1.passage.id, newChoice);
         this.saveStoryLocal();
-        this.saveChoiceLocal();
-
-        console.log(PassageChoice1);
         return graph;
     }
 
-    addNewChoiceToStoryData(){
-
+    addNewChoiceToStoryData(passageId, newChoice){
+        //add new choice to storyData
+        var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+        if (passage.choices == undefined){
+            passage.choices = [];
+        }
+        passage.choices.push(newChoice);
     }
 
     onAddPassage() {
@@ -139,7 +135,7 @@ class Graph extends React.Component {
             var source = link.get('source');
             var target = link.get('target');
             if (target.id && source.id){
-                var passageId = this.choicePassage[source.id];
+                var passageId = link.getSourceElement().get('parent');
                 var passage = _.find(this.storyData.content.passages, { 'id': passageId });
                 var choice = _.find(passage.choices, { 'id' : source.id });
                 if (choice) {
@@ -147,7 +143,7 @@ class Graph extends React.Component {
                     if (newLinkTo){
                         newLinkTo.id = target.id;
                     } else {
-                        newLinkTo = 
+                        newLinkTo =
                         {
                             "id": target.id,
                             "conditions": [],
@@ -163,11 +159,18 @@ class Graph extends React.Component {
 
     onRemovePassage(){
         this.graph.on('remove', function(eventName, cell){
-            if (eventName.attributes.type && eventName.attributes.type === 'html.Element'){
+            if (eventName.get('type') === 'html.Element'){
                 _.remove(this.storyData.content.passages, function(n){
                     return n.id == eventName.id;
                 });
-                //might also want to delete any link to that passage
+            }
+            if (eventName.get('type') == 'link'){
+                var passageId = this.graph.getCell(eventName.get('source').id).get('parent');
+                var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+                var choice = _.find(passage.choices, { 'id' : eventName.get('source').id });
+                var linkTo = _.remove(choice.linkTo, function(n){
+                    return n.id == eventName.get('target').id;
+                })
             }
         }.bind(this));
     }
@@ -186,9 +189,9 @@ class Graph extends React.Component {
                 $('.submit-passage').click(function(e){
                     //update visual
                     var title = $('.title-input').val();
-                    var titleShortened = (title.length > MAX_CHAR_TITLE) ? title.substring(0, MAX_CHAR_TITLE) + '...' : title;
+                    var titleShortened = (title.length > Constants.MAX_CHAR_TITLE) ? title.substring(0, Constants.MAX_CHAR_TITLE) + '...' : title;
                     var passage = $('.passage-input').val();
-                    var passageShortened = (passage.length > MAX_CHAR_PASSAGE) ? passage.substring(0, MAX_CHAR_PASSAGE) + '...' : passage;
+                    var passageShortened = (passage.length > Constants.MAX_CHAR_PASSAGE) ? passage.substring(0, Constants.MAX_CHAR_PASSAGE) + '...' : passage;
 
                     evt.$box.find('label').text(titleShortened);
                     evt.$box.find('p').text(passageShortened);
@@ -236,10 +239,6 @@ class Graph extends React.Component {
         localStorage.setItem(Constants.DEFAULT_GRAPH, JSON.stringify(this.graph.toJSON()));
     }
 
-    saveChoiceLocal(){
-        localStorage.setItem(Constants.DEFAULT_CHOICE_DATA, JSON.stringify(this.choicePassage));
-    }
-
     componentDidMount() {
         this.storyData = JSON.parse(localStorage.getItem(Constants.DEFAULT_STORY_DATA)) || {
             "metadata":
@@ -262,15 +261,22 @@ class Graph extends React.Component {
             }
         };
 
-        this.choicePassage = JSON.parse(localStorage.getItem(Constants.DEFAULT_CHOICE_DATA)) || {};
-
-
         this.paper = new joint.dia.Paper({
             el: ReactDOM.findDOMNode(this.refs.placeholder),
             width: 1200,
             model: this.graph,
+            interactive: function(cellView) {
+                if (cellView.model instanceof joint.shapes.devs.Model){
+                    return false;
+                }
+                return true;
+            },
             defaultLink: new joint.dia.Link({
-                attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' } }
+                attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
+                        '.marker-arrowhead-group-source': {
+                            display: 'none'
+                        },
+                }
             }),
             validateConnection: function(cellViewS, magnetS, cellViewT, magnetT, end, linkView) {
                 // Prevent linking from input ports.

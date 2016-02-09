@@ -32,6 +32,7 @@ function PassageChoice(x, y, width, height, label, text){
     });
 
     this.choice = choice1;
+    this.passage.embed(this.choice);
 }
 
 export default PassageChoice;
