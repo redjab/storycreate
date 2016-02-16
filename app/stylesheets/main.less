@@ -111,13 +111,15 @@ footer a {
   color: white !important;
 }
 
+.paper-container {
+  overflow: auto;
+}
 
 #paper {
    position: relative;
    border: 1px solid gray;
    display: inline-block;
    background: transparent;
-   overflow: scroll;
 }
 #paper svg {
    background: transparent;
@@ -191,4 +193,13 @@ footer a {
 
 .html-element p {
   word-wrap: break-word;
+}
+
+.element .element-tools {
+  display: none;
+  cursor: pointer
+}
+
+.element:hover .element-tools {
+  display: inline;
 }

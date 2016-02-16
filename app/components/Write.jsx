@@ -1,10 +1,138 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
-import joint from 'jointjs';
+import joint, { V } from 'jointjs';
 import _ from 'lodash';
 import PassageChoice from './PassageChoice';
 import Constants from './Constants'
+
+// Create a custom element.
+// ------------------------
+
+joint.shapes.html = {};
+joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
+    defaults: joint.util.deepSupplement({
+        type: 'html.Element',
+        attrs: {
+            rect: { stroke: 'none', 'fill-opacity': 0 }
+        }
+    }, joint.shapes.basic.Rect.prototype.defaults)
+});
+
+// Create a custom view for that element that displays an HTML div above it.
+// -------------------------------------------------------------------------
+
+joint.shapes.html.ElementView = joint.dia.ElementView.extend({
+
+    template: [
+        '<div class="html-element">',
+        '<button class="delete">x</button>',
+        '<label></label>',
+        '<hr/>',
+        '<p></p>',
+        '</div>'
+    ].join(''),
+
+    initialize: function() {
+        _.bindAll(this, 'updateBox');
+        joint.dia.ElementView.prototype.initialize.apply(this, arguments);
+
+        this.$box = $(_.template(this.template)());
+        this.$box.find('.delete').on('click', _.bind(this.model.remove, this.model));
+        // Update the box position whenever the underlying model changes.
+        this.model.on('change', this.updateBox, this);
+        // Remove the box when the model gets removed from the graph.
+        this.model.on('remove', this.removeBox, this);
+
+        this.updateBox();
+    },
+
+    render: function() {
+        joint.dia.ElementView.prototype.render.apply(this, arguments);
+        this.paper.$el.prepend(this.$box);
+        this.updateBox();
+        return this;
+    },
+    updateBox: function() {
+        // Set the position and dimension of the box so that it covers the JointJS element.
+        var bbox = this.model.getBBox();
+        // Example of updating the HTML with a data stored in the cell model.
+        this.$box.find('label').text(this.model.get('label'));
+        this.$box.find('p').text(this.model.get('text'));
+        // this.$box.find('span').text(this.model.get('select'));
+        this.$box.css({ width: bbox.width, height: bbox.height, left: bbox.x, top: bbox.y, transform: 'rotate(' + (this.model.get('angle') || 0) + 'deg)' });
+    },
+    removeBox: function(evt) {
+        this.$box.remove();
+    }
+});
+
+
+//Custom choice shapes
+joint.shapes.story = {};
+
+joint.shapes.story.ToolElement = joint.shapes.devs.Model.extend({
+    toolMarkup: ['<g class="element-tools">',
+        '<g class="element-tool-remove"><circle fill="red" r="11"/>',
+        '<path transform="scale(.8) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
+        '<title>Remove this element from the model</title>',
+        '</g>',
+        '</g>'].join(''),
+
+    markup: '<g class="rotatable"><g class="scalable"><rect class="body"/></g><text class="label"/><g class="inPorts"/><g class="outPorts"/></g>',
+    portMarkup: '<g class="port port<%= id %>"><circle class="port-body"/><text class="port-label"/></g>',
+
+    defaults: joint.util.deepSupplement({
+        type: 'story.ToolElement',
+    }, joint.shapes.devs.Model.prototype.defaults)
+
+});
+
+//custom view
+joint.shapes.story.ToolElementView = joint.shapes.devs.ModelView.extend({
+
+    initialize: function() {
+        joint.shapes.devs.ModelView.prototype.initialize.apply(this, arguments);
+    },
+
+    render: function () {
+        joint.shapes.devs.ModelView.prototype.render.apply(this, arguments);
+
+        this.renderTools();
+        this.update();
+
+        return this;
+    },
+
+    renderTools: function () {
+
+        var toolMarkup = this.model.toolMarkup || this.model.get('toolMarkup');
+        if (toolMarkup) {
+            var nodes = V(toolMarkup);
+            V(this.el).append(nodes);
+        }
+
+        return this;
+    }
+    // pointerdown: function(evt, x, y) {
+    //     this._dx = x;
+    //     this._dy = y;
+    //     this._action = '';
+
+    //     var className = evt.target.parentNode.getAttribute('class');
+
+    //     switch (className) {
+    //         case 'element-tool-remove':
+    //             this.model.remove();
+    //             return;
+    //             break;
+
+    //         default:
+    //     }
+    //     joint.dia.CellView.prototype.pointerdown.apply(this, arguments);
+    // }
+});
+
 var data = {
     "metadata":
     {
@@ -120,9 +248,6 @@ class Graph extends React.Component {
             }
 
             //have to check which passage it belongs to somehow.
-            //maybe use findViewsInArea, and keeping looking up until find the first html.Element
-            //maybe also keep track of passageChoice and double check againts previous choices?
-            //ok that's dumb. just keep a list of choices with its parent passage
             if (eventName.get('type') === 'devs.Model'){
                 // this.choicePassage.push()
             }
@@ -158,13 +283,30 @@ class Graph extends React.Component {
     }
 
     onRemovePassage(){
+        //remove choice
+        this.paper.on('cell:pointerdown', function(cellView, evt, x, y){
+            if (evt.target.parentNode.getAttribute('class') === 'element-tool-remove'){
+                //remove the choice from storyData
+                var passageId = this.graph.getCell(cellView.model.id).get('parent');
+                var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+                _.remove(passage.choices, function(n){
+                    return n.id === cellView.model.id;
+                });
+
+                cellView.model.remove();
+            }
+        }.bind(this));
+
+        //TODO: prevent deleting the starting passage or display warning
         this.graph.on('remove', function(eventName, cell){
+            //remove the passage from storyData
             if (eventName.get('type') === 'html.Element'){
                 _.remove(this.storyData.content.passages, function(n){
                     return n.id == eventName.id;
                 });
             }
-            if (eventName.get('type') == 'link'){
+            //remove the linkTo from storyData
+            if (eventName.isLink()){
                 var passageId = this.graph.getCell(eventName.get('source').id).get('parent');
                 var passage = _.find(this.storyData.content.passages, { 'id': passageId });
                 var choice = _.find(passage.choices, { 'id' : eventName.get('source').id });
@@ -219,7 +361,7 @@ class Graph extends React.Component {
         this.onDblClickPassage();
 
         //save to localStorage on graph changes
-        this.graph.on('batch:stop add remove', function(eventName, cell) {
+        this.graph.on('batch:stop batch:start add remove', function(eventName, cell) {
             this.storyData.metadata.updated = Date.now().toString();
             this.saveToLocalStorage();
         }.bind(this));
@@ -237,6 +379,10 @@ class Graph extends React.Component {
 
     saveGraphLocal(){
         localStorage.setItem(Constants.DEFAULT_GRAPH, JSON.stringify(this.graph.toJSON()));
+    }
+
+    saveGraphSizeLocal(){
+        localStorage.setItem(Constants.DEFAULT_GRAPH + "Size", JSON.stringify(this.paper.getArea()));
     }
 
     componentDidMount() {
@@ -260,12 +406,16 @@ class Graph extends React.Component {
                 "passages":[]
             }
         };
-
+        this.paperDiv = $(ReactDOM.findDOMNode(this.refs.placeholder));
+        var size = JSON.parse(localStorage.getItem(Constants.DEFAULT_GRAPH + "Size")) || {};
+        var height = size.height;
+        var width = size.width;
         this.paper = new joint.dia.Paper({
-            el: ReactDOM.findDOMNode(this.refs.placeholder),
-            width: 1200,
+            el: this.paperDiv,
+            width: width || $('.container').width(),
             model: this.graph,
             interactive: function(cellView) {
+                //prevent choice box dragging
                 if (cellView.model instanceof joint.shapes.devs.Model){
                     return false;
                 }
@@ -290,7 +440,7 @@ class Graph extends React.Component {
                 // Disable linking interaction for magnets marked as passive (see below `.inPorts circle`).
                 return magnet.getAttribute('magnet') !== 'passive';
             }
-        });
+        }).bind(this);
 
         this.setupListeners();
         var graphJSON = JSON.parse(localStorage.getItem(Constants.DEFAULT_GRAPH));
@@ -305,14 +455,33 @@ class Graph extends React.Component {
     addPassage() {
         var allElements = this.graph.getElements();
         var lastCell = allElements[allElements.length-1];
-        this.paper.findViewByModel(lastCell).unhighlight();
+        var x = Constants.PASSAGE_FIRST_POSITION_X;
+        var y = Constants.PASSAGE_FIRST_POSITION_Y;
 
-        var newPassage = new PassageChoice(lastCell.attributes.position.x+Constants.PASSAGE_TRANSLATE_X, lastCell.attributes.position.y,
+        if (lastCell != undefined){
+            this.paper.findViewByModel(lastCell).unhighlight();
+
+            x = lastCell.attributes.position.x + Constants.PASSAGE_TRANSLATE_X;
+            y = lastCell.attributes.position.y;
+
+        }
+        var newPassage = new PassageChoice(x, y,
             Constants.PASSAGE_WIDTH, Constants.PASSAGE_HEIGHT,
             Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED);
 
         this.graph.addCell(newPassage.passage);
         this.paper.findViewByModel(newPassage.passage).highlight();
+        var paperDiv = this.paperDiv;
+        x += Constants.PASSAGE_WIDTH * 2;
+        y += Constants.PASSAGE_HEIGHT * 2;
+        if (x > this.paper.getArea().width){
+            this.paper.setDimensions(x, this.paper.getArea().height);
+        }
+
+        if (y > this.paper.getArea().height){
+            this.paper.setDimensions(this.paper.getArea().width, y);
+        }
+        this.saveGraphSizeLocal();
     }
 
     render() {
@@ -339,8 +508,10 @@ class Graph extends React.Component {
               </div>
             </div>
 
-            <button type="button" className="btn btn-primary pull-right" onClick={this.addPassage.bind(this)}>Add Passage</button>
-            <div id='paper' ref='placeholder'></div>
+            <div className='paper-container'>
+                <button type="button" className="btn btn-primary pull-right" onClick={this.addPassage.bind(this)}>Add Passage</button>
+                <div id='paper' ref='placeholder'></div>
+            </div>
             </div>
         );
     }

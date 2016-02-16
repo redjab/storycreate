@@ -19,7 +19,7 @@ function PassageChoice(x, y, width, height, label, text){
     var choicePositionX = x;
     var choicePositionY = y + height;
 
-    var choice1 = new joint.shapes.devs.Model({
+    var choice1 = new joint.shapes.story.ToolElement({
         position: { x: x, y: y + height },
         size: { width: width, height: Constants.CHOICE_HEIGHT },
         outPorts: [''],

@@ -67,6 +67,7 @@ gulp.task('browserify-vendor', function() {
 gulp.task('browserify', ['browserify-vendor'], function() {
   return browserify('app/main.jsx', browserifyConfig)
     .external(dependencies)
+    .external('app/extra.jointjs.js')
     // .transform(babelify, { presets: ['es2015', 'react'] })
     .bundle()
     .pipe(source('bundle.js'))
