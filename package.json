@@ -38,6 +38,7 @@
     "passport-local": "^1.0.0",
     "pg": "^4.4.3",
     "pg-hstore": "^2.3.2",
+    "quill": "^0.20.1",
     "react": "^0.14.2",
     "react-dom": "^0.14.2",
     "react-router": "^1.0.0",

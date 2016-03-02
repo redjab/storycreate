@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
 import joint, { V } from 'jointjs';
 import _ from 'lodash';
-import PassageChoice from './PassageChoice';
-import Constants from './Constants'
+import PassageChoice, {Choice} from './PassageChoice';
+import Constants from './Constants';
+import Quill from 'quill'
 
 // Create a custom element.
 // ------------------------
@@ -71,16 +72,32 @@ joint.shapes.html.ElementView = joint.dia.ElementView.extend({
 //Custom choice shapes
 joint.shapes.story = {};
 
+joint.shapes.story.AddChoiceElement = joint.shapes.basic.Rect.extend({
+    markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>',
+    defaults: joint.util.deepSupplement({
+        type: 'story.AddChoiceElement',
+        attrs: {
+            rect: { fill: '#ffffff', rx: 0, ry: 0, 'stroke-width': 1, stroke: 'black', 'stroke-dasharray': '10,2' },
+            text: {
+                text: 'Add a choice',
+                'font-size': 13, 'font-weight': 'normal'
+            }
+        }
+    }, joint.shapes.basic.Rect.prototype.defaults)
+});
+
 joint.shapes.story.ToolElement = joint.shapes.devs.Model.extend({
     toolMarkup: ['<g class="element-tools">',
-        '<g class="element-tool-remove"><circle fill="red" r="11"/>',
-        '<path transform="scale(.8) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
+        '<g class="element-tool-remove"><circle fill="red" r="7"/>',
+        '<path transform="scale(.5) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
         '<title>Remove this element from the model</title>',
         '</g>',
         '</g>'].join(''),
 
     markup: '<g class="rotatable"><g class="scalable"><rect class="body"/></g><text class="label"/><g class="inPorts"/><g class="outPorts"/></g>',
     portMarkup: '<g class="port port<%= id %>"><circle class="port-body"/><text class="port-label"/></g>',
+    conditionsMarkup: '<g class="conditions"><rect class="condition-body"/><text class="condition-label"/></g>',
+    eventsMarkup: '<g class="events"><rect class="event-body"/><text class="event-label"/></g>',
 
     defaults: joint.util.deepSupplement({
         type: 'story.ToolElement',
@@ -98,6 +115,8 @@ joint.shapes.story.ToolElementView = joint.shapes.devs.ModelView.extend({
     render: function () {
         joint.shapes.devs.ModelView.prototype.render.apply(this, arguments);
 
+        this.renderEvents();
+        this.renderConditions();
         this.renderTools();
         this.update();
 
@@ -113,24 +132,29 @@ joint.shapes.story.ToolElementView = joint.shapes.devs.ModelView.extend({
         }
 
         return this;
+    },
+
+    renderConditions: function () {
+
+        var conditionsMarkup = this.model.conditionsMarkup || this.model.get('conditionsMarkup');
+        if (conditionsMarkup) {
+            var nodes = V(conditionsMarkup);
+            V(this.el).append(nodes);
+        }
+
+        return this;
+    },
+
+    renderEvents: function () {
+
+        var eventsMarkup = this.model.eventsMarkup || this.model.get('eventsMarkup');
+        if (eventsMarkup) {
+            var nodes = V(eventsMarkup);
+            V(this.el).append(nodes);
+        }
+
+        return this;
     }
-    // pointerdown: function(evt, x, y) {
-    //     this._dx = x;
-    //     this._dy = y;
-    //     this._action = '';
-
-    //     var className = evt.target.parentNode.getAttribute('class');
-
-    //     switch (className) {
-    //         case 'element-tool-remove':
-    //             this.model.remove();
-    //             return;
-    //             break;
-
-    //         default:
-    //     }
-    //     joint.dia.CellView.prototype.pointerdown.apply(this, arguments);
-    // }
 });
 
 var data = {
@@ -185,6 +209,7 @@ var data = {
         ]
     }
 };
+
 class Write extends React.Component {
   handleSubmit(event) {
         event.preventDefault();
@@ -208,9 +233,9 @@ class Graph extends React.Component {
     buildNewGraph(graph) {
         var PassageChoice1 = new PassageChoice(Constants.PASSAGE_FIRST_POSITION_X, Constants.PASSAGE_FIRST_POSITION_Y,
             Constants.PASSAGE_WIDTH, Constants.PASSAGE_HEIGHT,
-            Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED);
+            Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED, true);
 
-        graph.addCells([PassageChoice1.passage, PassageChoice1.choice]);
+        graph.addCells([PassageChoice1.passage, PassageChoice1.choice, PassageChoice1.addChoice]);
 
         //add new choice to storyData
         var newChoice = {
@@ -288,11 +313,26 @@ class Graph extends React.Component {
             if (evt.target.parentNode.getAttribute('class') === 'element-tool-remove'){
                 //remove the choice from storyData
                 var passageId = this.graph.getCell(cellView.model.id).get('parent');
+
+                var passageBox = this.graph.getCell(passageId);
+                var isBelow = false;
+
+                //move other choices up
+                _.forEach(passageBox.getEmbeddedCells(), function(value, index) {
+                    if (index == 0 || isBelow){
+                        value.translate(0, Constants.CHOICE_HEIGHT*(-1));
+                    }
+                    if (value.id == cellView.model.id){
+                        isBelow = true;
+                    }
+                });
+
                 var passage = _.find(this.storyData.content.passages, { 'id': passageId });
                 _.remove(passage.choices, function(n){
                     return n.id === cellView.model.id;
                 });
 
+                //remove the cell from graph
                 cellView.model.remove();
             }
         }.bind(this));
@@ -308,13 +348,88 @@ class Graph extends React.Component {
             //remove the linkTo from storyData
             if (eventName.isLink()){
                 var passageId = this.graph.getCell(eventName.get('source').id).get('parent');
-                var passage = _.find(this.storyData.content.passages, { 'id': passageId });
-                var choice = _.find(passage.choices, { 'id' : eventName.get('source').id });
-                var linkTo = _.remove(choice.linkTo, function(n){
-                    return n.id == eventName.get('target').id;
-                })
+
+                //if undefined, meaning the whole choice has been removed, so no need to remove linkTo
+                if (passageId){
+                    var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+
+                    var choiceId = eventName.get('source').id;
+                    var choice = _.find(passage.choices, { 'id' : choiceId });
+
+                    var linkTo = _.remove(choice.linkTo, function(n){
+                        return n.id == eventName.get('target').id;
+                    })
+                }
             }
         }.bind(this));
+    }
+
+    shortenContent(text, maxLength){
+        return (text.length > maxLength) ? text.substring(0, maxLength) + '...' : text;
+    }
+
+    onClickAddChoice(){
+        this.paper.on('cell:pointerdown', function(evt, x, y) {
+            if (evt.model instanceof joint.shapes.story.AddChoiceElement){
+                $('#choiceModal').modal('show');
+                $('.submit-choice').off('click');
+                $('.choice-input').val('');
+
+                $('.submit-choice').click(function(e){
+
+
+                    var choiceData = $('.choice-input').val();
+                    var choiceShortened = this.shortenContent(choiceData, Constants.MAX_CHAR_CHOICE);
+
+
+                    var passageBox = this.graph.getCell(evt.model.get('parent'));
+                    var addChoiceBox = passageBox.getEmbeddedCells()[0];
+                    var choiceY = addChoiceBox.get('position').y;
+                    var childrenLength = passageBox.getEmbeddedCells().length;
+
+                    var choiceBox = Choice(passageBox.get('position').x, choiceY, choiceShortened);
+                    passageBox.embed(choiceBox);
+
+                    this.graph.addCell(choiceBox);
+
+                    var newChoice = {
+                                        "id": choiceBox.id,
+                                        "text": choiceData,
+                                        "linkTo": []
+                                    }
+                    this.addNewChoiceToStoryData(evt.model.get('parent'), newChoice);
+                    addChoiceBox.translate(0, Constants.CHOICE_HEIGHT);
+
+                    $('#choiceModal').modal('hide');
+                }.bind(this))
+
+            }
+        }.bind(this))
+    }
+
+    onDblClickChoice() {
+        this.paper.on('cell:pointerdblclick', function(evt, x, y) {
+            if (evt.model.get('type') === 'story.ToolElement'){
+                $('#choiceModal').modal('show');
+                $('.submit-choice').off('click');
+
+                var passage = _.find(this.storyData.content.passages, {'id': evt.model.get('parent')});
+                var choice = _.find(passage.choices, {'id': evt.model.id});
+
+                $('.choice-input').val(choice.text);
+
+                $('.submit-choice').click(function(e){
+                    var choiceData = $('.choice-input').val();
+                    var choiceShortened = this.shortenContent(choiceData, Constants.MAX_CHAR_CHOICE);
+
+                    evt.model.attr('.label/text', choiceShortened);
+
+                    choice.text = choiceData;
+                    this.saveToLocalStorage();
+                    $('#choiceModal').modal('hide');
+                }.bind(this))
+            }
+        }.bind(this))
     }
 
     onDblClickPassage() {
@@ -323,17 +438,23 @@ class Graph extends React.Component {
                 $('#passageModal').modal('show');
                 $('.submit-passage').off('click');
 
+                setTimeout(function (){
+                    $('.ql-editor').focus();
+                }, 1000);
+
                 var passageData = _.find(this.storyData.content.passages, { 'id': evt.model.id });
 
                 $('.title-input').val(passageData.title);
-                $('.passage-input').val(passageData.text);
+                this.passageEditor.setHTML(passageData.text);
+                //$('.passage-input').val(passageData.text);
 
                 $('.submit-passage').click(function(e){
                     //update visual
                     var title = $('.title-input').val();
-                    var titleShortened = (title.length > Constants.MAX_CHAR_TITLE) ? title.substring(0, Constants.MAX_CHAR_TITLE) + '...' : title;
-                    var passage = $('.passage-input').val();
-                    var passageShortened = (passage.length > Constants.MAX_CHAR_PASSAGE) ? passage.substring(0, Constants.MAX_CHAR_PASSAGE) + '...' : passage;
+                    var titleShortened = this.shortenContent(title, Constants.MAX_CHAR_TITLE);
+                    //var passage = $('.passage-input').val();
+                    var passage = this.passageEditor.getHTML();
+                    var passageShortened = this.shortenContent(this.passageEditor.getText(), Constants.MAX_CHAR_PASSAGE);
 
                     evt.$box.find('label').text(titleShortened);
                     evt.$box.find('p').text(passageShortened);
@@ -359,6 +480,8 @@ class Graph extends React.Component {
         this.onChangeLink();
         this.onRemovePassage();
         this.onDblClickPassage();
+        this.onDblClickChoice();
+        this.onClickAddChoice();
 
         //save to localStorage on graph changes
         this.graph.on('batch:stop batch:start add remove', function(eventName, cell) {
@@ -385,7 +508,19 @@ class Graph extends React.Component {
         localStorage.setItem(Constants.DEFAULT_GRAPH + "Size", JSON.stringify(this.paper.getArea()));
     }
 
+    initializeQuill(){
+          this.passageEditor = new Quill('#quill-passage', {
+              modules: {
+                'toolbar': { container: '#toolbar-passage' },
+                'image-tooltip': true,
+                'link-tooltip': true
+              },
+              theme: 'snow'
+          });
+    }
+
     componentDidMount() {
+        this.initializeQuill();
         this.storyData = JSON.parse(localStorage.getItem(Constants.DEFAULT_STORY_DATA)) || {
             "metadata":
             {
@@ -416,7 +551,7 @@ class Graph extends React.Component {
             model: this.graph,
             interactive: function(cellView) {
                 //prevent choice box dragging
-                if (cellView.model instanceof joint.shapes.devs.Model){
+                if (cellView.model instanceof joint.shapes.devs.Model || cellView.model instanceof joint.shapes.story.AddChoiceElement){
                     return false;
                 }
                 return true;
@@ -469,7 +604,9 @@ class Graph extends React.Component {
             Constants.PASSAGE_WIDTH, Constants.PASSAGE_HEIGHT,
             Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED);
 
-        this.graph.addCell(newPassage.passage);
+        newPassage.passage.embed(newPassage.addChoice);
+        this.graph.addCell([newPassage.passage, newPassage.addChoice]);
+
         this.paper.findViewByModel(newPassage.passage).highlight();
         var paperDiv = this.paperDiv;
         x += Constants.PASSAGE_WIDTH * 2;
@@ -497,12 +634,32 @@ class Graph extends React.Component {
                   <div className="modal-body">
                     <form className="form-horizontal" role="form">
                         <input type="text" className="form-control title-input" placeholder="Title"/>
-                        <textarea name="passage" rows='5' className="form-control passage-input" data-modalfocus></textarea>
                     </form>
+                    <QuillEditor/>
                   </div>
                   <div className="modal-footer">
                     <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
                     <button type="button" className="btn btn-primary submit-passage">Save changes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal" id="choiceModal">
+              <div className="modal-dialog" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 className="modal-title" id="myModalLabel">Edit Choice</h4>
+                  </div>
+                  <div className="modal-body">
+                    <form className="form-horizontal" role="form">
+                        <textarea name="passage" rows='5' className="form-control choice-input" data-modalfocus></textarea>
+                    </form>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" className="btn btn-primary submit-choice">Save changes</button>
                   </div>
                 </div>
               </div>
@@ -514,6 +671,39 @@ class Graph extends React.Component {
             </div>
             </div>
         );
+    }
+}
+
+class QuillEditor extends React.Component {
+    render() {
+        return (
+            <div className="quill-wrapper">
+            <div id="toolbar-passage" className="toolbar">
+                <span className="ql-format-group">
+                    <span title="Bold" className="ql-format-button ql-bold"></span>
+                    <span className="ql-format-separator"></span>
+                    <span title="Italic" className="ql-format-button ql-italic"></span>
+                    <span className="ql-format-separator"></span>
+                    <span title="Underline" className="ql-format-button ql-underline"></span>
+                    <span className="ql-format-separator"></span>
+                    <span title="Strikethrough" className="ql-format-button ql-strike"></span>
+                </span>
+                <span className="ql-format-group">
+                    <span title="List" className="ql-format-button ql-list"></span>
+                    <span className="ql-format-separator"></span>
+                    <span title="Bullet" className="ql-format-button ql-bullet"></span>
+                    <span className="ql-format-separator"></span>
+                </span>
+                <span className="ql-format-group">
+                    <span title="Link" className="ql-format-button ql-link"></span>
+                    <span className="ql-format-separator"></span>
+                    <span title="Image" className="ql-format-button ql-image"></span>
+                </span>
+            </div>
+            <div id="quill-passage">
+            </div>
+            </div>
+        )
     }
 }
 

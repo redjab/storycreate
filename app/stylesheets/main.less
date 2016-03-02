@@ -4,6 +4,9 @@
 @import (reference) '../../bower_components/bootstrap/less/mixins/buttons.less';
 @import (reference) './write.less';
 @import (less) '../../bower_components/jointjs/joint.css';
+@import (less) '../../node_modules/quill/dist/quill.snow.css';
+@import (less) './Quill/styles.css';
+@import (less) './Quill/syntax.css';
 
 html {
   position: relative;
@@ -59,6 +62,7 @@ footer a {
   background-color: white;
   background-color: rgba(255, 255, 255, 0.7);
   font-size: 3vmin;
+  padding: 3px 7px;
 }
 
 .banner-span-main {
@@ -109,6 +113,14 @@ footer a {
 .btn-red {
   .button-variant(@btn-red-color; @btn-red-color; @btn-red-color);
   color: white !important;
+}
+
+.title-input {
+  border-radius: 0px;
+}
+
+#quill-passage {
+  min-height: 300px;
 }
 
 .paper-container {
@@ -195,11 +207,11 @@ footer a {
   word-wrap: break-word;
 }
 
-.element .element-tools {
+.element .element-tools, .element .conditions, .element .events {
   display: none;
   cursor: pointer
 }
 
-.element:hover .element-tools {
+.element:hover .element-tools, .element:hover .conditions, .element:hover .events {
   display: inline;
 }
