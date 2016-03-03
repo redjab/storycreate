@@ -119,8 +119,8 @@ footer a {
   border-radius: 0px;
 }
 
-#quill-passage {
-  min-height: 300px;
+.ql-editor {
+  min-height: 300px !important;
 }
 
 .paper-container {
@@ -139,7 +139,7 @@ footer a {
 #paper svg .link {
    z-index: 2;
 }
-.html-element {
+.passage-element {
    position: absolute;
    background: #ffffff;
    /* Make sure events are propagated to the JointJS element so, e.g. dragging works.*/
@@ -149,12 +149,14 @@ footer a {
    padding: 5px;
    box-sizing: border-box;
    z-index: 2;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
-.html-element button {
+.passage-element button {
    /* Enable interacting with inputs only. */
-   pointer-events: auto;   
+   pointer-events: auto;
 }
-.html-element button.delete {
+.passage-element button.delete {
     border: none;
     width: 20px;
     height: 20px;
@@ -166,17 +168,17 @@ footer a {
     font-weight: bold;
     cursor: pointer;
  }
-.html-element button.delete:hover {
+.passage-element button.delete:hover {
    width: 20px;
    height: 20px;
    line-height: 20px;
 }
-.html-element select {
+.passage-element select {
    position: absolute;
    right: 2px;
    bottom: 28px;
 }
-.html-element input {
+.passage-element input {
    position: absolute;
    bottom: 0;
    left: 0;
@@ -186,11 +188,11 @@ footer a {
    padding: 5px;
    height: 16px;
 }
-.html-element label {
+.passage-element label {
    color: black;
    font-weight: bold;
 }
-.html-element span {
+.passage-element span {
    position: absolute;
    top: 2px;
    right: 9px;
@@ -198,12 +200,12 @@ footer a {
    font-size: 10px;
 }
 
-.html-element hr {
+.passage-element hr {
    margin-top: 0px;
    margin-bottom: 0px;
 }
 
-.html-element p {
+.passage-element p {
   word-wrap: break-word;
 }
 
@@ -214,4 +216,8 @@ footer a {
 
 .element:hover .element-tools, .element:hover .conditions, .element:hover .events {
   display: inline;
+}
+
+.ChoiceElement .label {
+  font-weight: normal;
 }

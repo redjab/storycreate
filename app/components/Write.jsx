@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
-import joint, { V } from 'jointjs';
+import joint, { V, g } from 'jointjs';
 import _ from 'lodash';
 import PassageChoice, {Choice} from './PassageChoice';
 import Constants from './Constants';
@@ -10,10 +10,10 @@ import Quill from 'quill'
 // Create a custom element.
 // ------------------------
 
-joint.shapes.html = {};
-joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
+joint.shapes.story = {};
+joint.shapes.story.Passage = joint.shapes.basic.Rect.extend({
     defaults: joint.util.deepSupplement({
-        type: 'html.Element',
+        type: 'story.Passage',
         attrs: {
             rect: { stroke: 'none', 'fill-opacity': 0 }
         }
@@ -23,10 +23,10 @@ joint.shapes.html.Element = joint.shapes.basic.Rect.extend({
 // Create a custom view for that element that displays an HTML div above it.
 // -------------------------------------------------------------------------
 
-joint.shapes.html.ElementView = joint.dia.ElementView.extend({
+joint.shapes.story.PassageView = joint.dia.ElementView.extend({
 
     template: [
-        '<div class="html-element">',
+        '<div class="passage-element">',
         '<button class="delete">x</button>',
         '<label></label>',
         '<hr/>',
@@ -70,7 +70,7 @@ joint.shapes.html.ElementView = joint.dia.ElementView.extend({
 
 
 //Custom choice shapes
-joint.shapes.story = {};
+// joint.shapes.story = {};
 
 joint.shapes.story.AddChoiceElement = joint.shapes.basic.Rect.extend({
     markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g>',
@@ -86,7 +86,7 @@ joint.shapes.story.AddChoiceElement = joint.shapes.basic.Rect.extend({
     }, joint.shapes.basic.Rect.prototype.defaults)
 });
 
-joint.shapes.story.ToolElement = joint.shapes.devs.Model.extend({
+joint.shapes.story.ChoiceElement = joint.shapes.devs.Model.extend({
     toolMarkup: ['<g class="element-tools">',
         '<g class="element-tool-remove"><circle fill="red" r="7"/>',
         '<path transform="scale(.5) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
@@ -100,13 +100,13 @@ joint.shapes.story.ToolElement = joint.shapes.devs.Model.extend({
     eventsMarkup: '<g class="events"><rect class="event-body"/><text class="event-label"/></g>',
 
     defaults: joint.util.deepSupplement({
-        type: 'story.ToolElement',
+        type: 'story.ChoiceElement',
     }, joint.shapes.devs.Model.prototype.defaults)
 
 });
 
 //custom view
-joint.shapes.story.ToolElementView = joint.shapes.devs.ModelView.extend({
+joint.shapes.story.ChoiceElementView = joint.shapes.devs.ModelView.extend({
 
     initialize: function() {
         joint.shapes.devs.ModelView.prototype.initialize.apply(this, arguments);
@@ -260,7 +260,7 @@ class Graph extends React.Component {
     onAddPassage() {
         //save story data when adding a new passage
         this.graph.on('add', function(eventName, cell){
-            if (eventName.get('type') === 'html.Element'){
+            if (eventName instanceof joint.shapes.story.Passage){
                 this.storyData.content.passages.push({
                     "id": eventName.id,
                     "title": Constants.DEFAULT_TITLE,
@@ -340,7 +340,7 @@ class Graph extends React.Component {
         //TODO: prevent deleting the starting passage or display warning
         this.graph.on('remove', function(eventName, cell){
             //remove the passage from storyData
-            if (eventName.get('type') === 'html.Element'){
+            if (eventName instanceof joint.shapes.story.Passage){
                 _.remove(this.storyData.content.passages, function(n){
                     return n.id == eventName.id;
                 });
@@ -365,7 +365,27 @@ class Graph extends React.Component {
     }
 
     shortenContent(text, maxLength){
-        return (text.length > maxLength) ? text.substring(0, maxLength) + '...' : text;
+        var shortend = (text.length > maxLength) ? text.substring(0, maxLength) + '...' : text;
+        var wraptext = joint.util.breakText(shortend, {
+            width: Constants.PASSAGE_WIDTH,
+            height: Constants.PASSAGE_HEIGHT
+        });
+        return wraptext;
+    }
+
+    updateLinkRoute(){
+        this.graph.on('change:position', function(cell) {
+            if (cell instanceof joint.shapes.story.Passage){
+                var cells = this.graph.findModelsInArea(g.rect(cell.getBBox()));
+                _.forEach(cells, function(cell){
+                    var links = this.graph.getConnectedLinks(cell, {deep: true});
+                    //TODO: this is not really what we want, have to get the links in the area somehow
+                    _.forEach(links, function(link){
+                        this.paper.findViewByModel(link).update();
+                    }.bind(this));
+                }.bind(this));
+            }
+        }.bind(this));
     }
 
     onClickAddChoice(){
@@ -399,6 +419,7 @@ class Graph extends React.Component {
                                     }
                     this.addNewChoiceToStoryData(evt.model.get('parent'), newChoice);
                     addChoiceBox.translate(0, Constants.CHOICE_HEIGHT);
+                    this.saveGraphLocal();
 
                     $('#choiceModal').modal('hide');
                 }.bind(this))
@@ -409,7 +430,7 @@ class Graph extends React.Component {
 
     onDblClickChoice() {
         this.paper.on('cell:pointerdblclick', function(evt, x, y) {
-            if (evt.model.get('type') === 'story.ToolElement'){
+            if (evt.model instanceof joint.shapes.story.ChoiceElement){
                 $('#choiceModal').modal('show');
                 $('.submit-choice').off('click');
 
@@ -434,7 +455,7 @@ class Graph extends React.Component {
 
     onDblClickPassage() {
         this.paper.on('cell:pointerdblclick', function(evt, x, y) {
-            if (evt.model.attributes.type && evt.model.attributes.type === 'html.Element'){
+            if (evt.model.attributes.type && evt.model.attributes.type === 'story.Passage'){
                 $('#passageModal').modal('show');
                 $('.submit-passage').off('click');
 
@@ -482,6 +503,7 @@ class Graph extends React.Component {
         this.onDblClickPassage();
         this.onDblClickChoice();
         this.onClickAddChoice();
+        this.updateLinkRoute();
 
         //save to localStorage on graph changes
         this.graph.on('batch:stop batch:start add remove', function(eventName, cell) {
@@ -557,6 +579,8 @@ class Graph extends React.Component {
                 return true;
             },
             defaultLink: new joint.dia.Link({
+                router: { name: 'metro' },
+                connector: { name: 'rounded' },
                 attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
                         '.marker-arrowhead-group-source': {
                             display: 'none'
@@ -568,7 +592,7 @@ class Graph extends React.Component {
                 if (magnetS && magnetS.getAttribute('type') === 'input') return false;
                 //Prevent linking from passage
                 if (cellViewS && cellViewS.model.attr('innerType') && cellViewS.model.attr('innerType').typeText === 'input') return false;
-                return (cellViewT &&  cellViewT.model.get('type') === 'html.Element');
+                return (cellViewT &&  cellViewT.model instanceof joint.shapes.story.Passage);
             },
             validateMagnet: function(cellView, magnet) {
                 // Note that this is the default behaviour. Just showing it here for reference.
@@ -589,7 +613,13 @@ class Graph extends React.Component {
 
     addPassage() {
         var allElements = this.graph.getElements();
-        var lastCell = allElements[allElements.length-1];
+        var lastCell;
+        _.forEachRight(allElements, function(value){
+            if(value instanceof joint.shapes.story.Passage){
+                lastCell = value;
+                return false;
+            }
+        });
         var x = Constants.PASSAGE_FIRST_POSITION_X;
         var y = Constants.PASSAGE_FIRST_POSITION_Y;
 
@@ -624,6 +654,7 @@ class Graph extends React.Component {
     render() {
         return (
             <div>
+            <button type="button" className="btn btn-primary" onClick={this.addPassage.bind(this)}>Add Passage</button>
             <div className="modal" id="passageModal">
               <div className="modal-dialog" role="document">
                 <div className="modal-content">
@@ -666,7 +697,6 @@ class Graph extends React.Component {
             </div>
 
             <div className='paper-container'>
-                <button type="button" className="btn btn-primary pull-right" onClick={this.addPassage.bind(this)}>Add Passage</button>
                 <div id='paper' ref='placeholder'></div>
             </div>
             </div>
@@ -675,6 +705,12 @@ class Graph extends React.Component {
 }
 
 class QuillEditor extends React.Component {
+    componentDidMount(){
+        $(".ql-format-button").on('mousemove', function(e) {
+           e.preventDefault();
+        });
+    }
+
     render() {
         return (
             <div className="quill-wrapper">

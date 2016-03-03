@@ -8,7 +8,7 @@ function PassageChoice(x, y, width, height, label, text, isFirst){
     this.height = height;
     this.label = label;
     this.text = text;
-    this.passage = new joint.shapes.html.Element({
+    this.passage = new joint.shapes.story.Passage({
         position: { x: x, y: y },
         size: { width: width, height: height },
         label: label,
@@ -38,12 +38,15 @@ function PassageChoice(x, y, width, height, label, text, isFirst){
 }
 
 function Choice(x, y, text){
-    var choice = new joint.shapes.story.ToolElement({
+    var choice = new joint.shapes.story.ChoiceElement({
         position: { x: x, y: y },
         size: { width: Constants.CHOICE_WIDTH, height: Constants.CHOICE_HEIGHT },
         outPorts: [''],
         attrs: {
-            '.label': { text: text, 'ref-x': .45, 'ref-y': .2 },
+            '.label': { text: text,
+                'font-weight': 'normal',
+                'transform': 'translate(2,10)'
+            },
             rect: { fill: '#ffffff', 'stroke-width': 1 },
             '.inPorts circle': { fill: '#16A085', type: 'input' },
             '.outPorts circle': { fill: '#E74C3C', type: 'output' },

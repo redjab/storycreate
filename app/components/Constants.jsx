@@ -1,12 +1,12 @@
 var MAX_CHAR_TITLE = 12;
-var MAX_CHAR_PASSAGE = 67;
-var MAX_CHAR_CHOICE = 10;
+var MAX_CHAR_PASSAGE = 75;
+var MAX_CHAR_CHOICE = 17;
 
 var DEFAULT_TITLE = "Untitled";
 var DEFAULT_PASSAGE = "Double click here to start writing and add choices. To branch your story, add a choice to this passage, and drag from the choice to a new passage."
 var DEFAULT_PASSAGE_SHORTENED = DEFAULT_PASSAGE.substring(0, MAX_CHAR_PASSAGE) + "...";
-var PASSAGE_HEIGHT = 140;
-var PASSAGE_WIDTH = 120;
+var PASSAGE_HEIGHT = 150;
+var PASSAGE_WIDTH = 130;
 
 var PASSAGE_FIRST_POSITION_X = 80;
 var PASSAGE_FIRST_POSITION_Y = 80;
