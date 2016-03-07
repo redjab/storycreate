@@ -13,7 +13,19 @@ function PassageChoice(x, y, width, height, label, text, isFirst){
         size: { width: width, height: height },
         label: label,
         text: text,
-        attrs: {innerType: {typeText : 'input'} }
+        attrs: {
+            innerType: {typeText : 'input'},
+            //have to put this here otherwise it gets overwritten by Rect/text attrs
+            '.event-label': {
+                text: "Modify Events",
+                'fill': "#000000",
+                'font-size': 7,
+                'ref-x': 1.1,
+                'ref-y': 4,
+                'font-family': '',
+                'text-anchor': 'start',
+            }
+        }
     });
     this.choices = [];
     var choicePositionX = x;
@@ -43,48 +55,7 @@ function Choice(x, y, text){
         size: { width: Constants.CHOICE_WIDTH, height: Constants.CHOICE_HEIGHT },
         outPorts: [''],
         attrs: {
-            '.label': { text: text,
-                'font-weight': 'normal',
-                'transform': 'translate(2,10)'
-            },
-            rect: { fill: '#ffffff', 'stroke-width': 1 },
-            '.inPorts circle': { fill: '#16A085', type: 'input' },
-            '.outPorts circle': { fill: '#E74C3C', type: 'output' },
-
-            '.conditions' : { 'ref-x': Constants.CHOICE_WIDTH*(-1/2) },
-            '.condition-body' : {
-                width: Constants.CHOICE_WIDTH/2,
-                height: Constants.CHOICE_HEIGHT/2,
-                'stroke': "#000000",
-                'stroke-dasharray': '10,2',
-                'ref': '.conditions',
-            },
-            '.condition-label': {
-                text: "Modify Conditions",
-                'fill': "#000000",
-                'font-size': 7,
-                'ref': '.condition-body',
-                'transform': 'translate(1,4)'
-            },
-
-            '.events': {
-                    'ref-x': Constants.CHOICE_WIDTH*(-1/2),
-                    'ref-y': Constants.CHOICE_HEIGHT*(1/2),
-            },
-            '.event-body' : {
-                width: Constants.CHOICE_WIDTH/2,
-                height: Constants.CHOICE_HEIGHT/2,
-                'stroke': "#000000",
-                'stroke-dasharray': '10,2',
-                'ref': '.events'
-            },
-            '.event-label': {
-                text: "Modify Events",
-                'fill': "#000000",
-                'font-size': 7,
-                'ref': '.event-body',
-                'transform': 'translate(1,4)'
-            }
+            '.label': { text: text },
         }
     });
     return choice;

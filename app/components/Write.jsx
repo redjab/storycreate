@@ -12,10 +12,23 @@ import Quill from 'quill'
 
 joint.shapes.story = {};
 joint.shapes.story.Passage = joint.shapes.basic.Rect.extend({
+    markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g><g class="events"><rect class="event-body"/><text class="event-label"/></g>',
+
     defaults: joint.util.deepSupplement({
         type: 'story.Passage',
         attrs: {
-            rect: { stroke: 'none', 'fill-opacity': 0 }
+            rect: { stroke: 'none', 'fill-opacity': 0 },
+            '.events': {
+                    'ref-x': Constants.PASSAGE_WIDTH*(-1/2),
+                    'ref-y': Constants.PASSAGE_HEIGHT*(1/2),
+            },
+            '.event-body' : {
+                width: Constants.PASSAGE_WIDTH/2,
+                height: Constants.PASSAGE_HEIGHT/12,
+                'stroke': "#000000",
+                'stroke-dasharray': '10,2',
+                'ref': '.events'
+            },
         }
     }, joint.shapes.basic.Rect.prototype.defaults)
 });
@@ -101,6 +114,53 @@ joint.shapes.story.ChoiceElement = joint.shapes.devs.Model.extend({
 
     defaults: joint.util.deepSupplement({
         type: 'story.ChoiceElement',
+        size: { width: Constants.CHOICE_WIDTH, height: Constants.CHOICE_HEIGHT },
+        outPorts: [''],
+        attrs: {
+            '.label': {
+                'font-weight': 'normal',
+                'transform': 'translate(2,10)'
+            },
+            rect: { fill: '#ffffff', 'stroke-width': 1 },
+            '.inPorts circle': { fill: '#16A085', type: 'input' },
+            '.outPorts circle': { fill: '#E74C3C', type: 'output' },
+
+            '.conditions' : { 'ref-x': Constants.CHOICE_WIDTH*(-1/2) },
+            '.condition-body' : {
+                width: Constants.CHOICE_WIDTH/2,
+                height: Constants.CHOICE_HEIGHT/2,
+                'stroke': "#000000",
+                'stroke-dasharray': '10,2',
+                'ref': '.conditions',
+            },
+            '.condition-label': {
+                text: "Modify Conditions",
+                'fill': "#000000",
+                'font-size': 7,
+                'ref': '.condition-body',
+                'transform': 'translate(1,4)'
+            },
+
+            '.events': {
+                    'ref-x': Constants.CHOICE_WIDTH*(-1/2),
+                    'ref-y': Constants.CHOICE_HEIGHT*(1/2),
+            },
+            '.event-body' : {
+                width: Constants.CHOICE_WIDTH/2,
+                height: Constants.CHOICE_HEIGHT/2,
+                'stroke': "#000000",
+                'stroke-dasharray': '10,2',
+                'ref': '.events'
+            },
+            '.event-label': {
+                text: "Modify Events",
+                'fill': "#000000",
+                'font-size': 7,
+                'ref': '.event-body',
+                'transform': 'translate(1,4)'
+            }
+        }
+
     }, joint.shapes.devs.Model.prototype.defaults)
 
 });
@@ -190,6 +250,19 @@ var data = {
                 "id": "uuid",
                 "title": "untitled",
                 "text": "This is a test passage",
+                "events":
+                [
+                    {
+                        "attribute": "uuid",
+                        "operator": "=",
+                        "value": "True"
+                    },
+                    {
+                        "attribute": "uuid",
+                        "operator": "+",
+                        "value": "1"
+                    }
+                ],
                 "choices":
                 [
                     {
@@ -579,6 +652,7 @@ class Graph extends React.Component {
                 return true;
             },
             defaultLink: new joint.dia.Link({
+                doubleLinkTools: true,
                 router: { name: 'metro' },
                 connector: { name: 'rounded' },
                 attrs: { '.marker-target': { d: 'M 10 0 L 0 5 L 10 10 z' },
@@ -586,6 +660,11 @@ class Graph extends React.Component {
                             display: 'none'
                         },
                 }
+            }),
+            linkView: joint.dia.LinkView.extend({
+                options: _.defaults({
+                    doubleLinkTools: true
+                }, joint.dia.LinkView.prototype.options)
             }),
             validateConnection: function(cellViewS, magnetS, cellViewT, magnetT, end, linkView) {
                 // Prevent linking from input ports.
