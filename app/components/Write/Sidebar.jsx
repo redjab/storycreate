@@ -2,15 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 class Sidebar extends React.Component {
-    componentDidMount(){
-        if (typeof(window) != undefined){
-            $('#sidebar-wrapper').height($(window).outerHeight());
-            $( window ).resize(function() {
-                $('#sidebar-wrapper').height($('.main-content').outerHeight());
-            });
-        }
-    }
-
     render() {
         return (
             <div id="sidebar-wrapper">
@@ -19,7 +10,7 @@ class Sidebar extends React.Component {
                         <a href="#">Options</a>
                     </li>
                     <li>
-                        <a href="#">Attributes</a>
+                        <a href="#" onClick={this.props.onClickAttribute.bind(this)}>Attributes</a>
                     </li>
                     <li>
                         <a href="#">Preview</a>
@@ -38,6 +29,15 @@ class Sidebar extends React.Component {
                         </span>
                     </div>
                 </ul>
+            </div>
+        )
+    }
+}
+
+class AttributePanel extends React.Component {
+    render(){
+        return(
+            <div>
             </div>
         )
     }

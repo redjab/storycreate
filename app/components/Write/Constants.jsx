@@ -1,5 +1,5 @@
-var MAX_CHAR_TITLE = 12;
-var MAX_CHAR_PASSAGE = 75;
+var MAX_CHAR_TITLE = 17;
+var MAX_CHAR_PASSAGE = 125;
 var MAX_CHAR_CHOICE = 17;
 
 var DEFAULT_TITLE = "Untitled";

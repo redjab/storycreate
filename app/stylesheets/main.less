@@ -7,6 +7,7 @@
 @import (less) '../../node_modules/quill/dist/quill.snow.css';
 @import (less) './Quill/styles.css';
 @import (less) './Quill/syntax.css';
+@import (less) '../../node_modules/react-bootstrap-table/css/react-bootstrap-table.min.css';
 
 html {
   position: relative;
@@ -43,6 +44,7 @@ footer a {
   background-image: url("../img/homebackground.jpg");
   background-position: 50% 0%;
   height:350px;
+  padding-top: 50px;
 }
 
 .front-banner a {
@@ -76,7 +78,7 @@ footer a {
 }
 
 .main-content {
-  padding-top: 15px;
+  padding-top: 50px;
   padding-bottom: 15px;
 }
 
@@ -123,10 +125,10 @@ footer a {
   min-height: 300px !important;
 }
 
-.paper-container {
+/*.paper-container {
   overflow: auto;
 }
-
+*/
 #paper {
    position: relative;
    border: 1px solid gray;
@@ -138,6 +140,15 @@ footer a {
 }
 #paper svg .link {
    z-index: 2;
+}
+
+.diagram-control {
+  padding-top: 5px;
+}
+.diagram-control .glyphicon {
+  font-size: 1.8em;
+  cursor: pointer;
+  padding-right: 5px;
 }
 .passage-element {
    position: absolute;
@@ -222,15 +233,19 @@ footer a {
   font-weight: normal;
 }
 
+.AddChoiceElement:hover {
+  cursor: pointer;
+}
+
 .graph-wrapper {
   background: white;
 }
 
-#sidebar-wrapper {
+#attribute-sidebar-wrapper, #sidebar-wrapper {
     float:left;
-    position: relative;
+    position: fixed;
     height: 100%;
-    width: 185px;
+    margin-top: 50px;
     overflow-y: auto;
     background: #dd4814;
     -webkit-transition: all 0.5s ease;
@@ -239,11 +254,29 @@ footer a {
     transition: all 0.5s ease;
 }
 
-.sidebar-nav {
-    position: absolute;
-    top: 0;
+#attribute-sidebar-wrapper {
+  z-index: 1;
+  width: 500px;
+}
+
+#sidebar-wrapper {
     width: 185px;
-    margin: 0;
+}
+.sidebar a {
+  color: white;
+  font-style: italic;
+}
+
+.sidebar p {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.sidebar .editor {
+  visibility: visible;
+}
+.sidebar-nav {
+/*    position: absolute;*/
     padding: 0;
     list-style: none;
 }
@@ -272,4 +305,8 @@ footer a {
     #sidebar-wrapper {
         width: 0;
     }
+}
+
+.hidden {
+  display: none;
 }

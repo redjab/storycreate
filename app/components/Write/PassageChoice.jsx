@@ -12,16 +12,31 @@ function PassageChoice(x, y, width, height, label, text, isFirst){
         position: { x: x, y: y },
         size: { width: width, height: height },
         label: label,
-        text: text,
+
         attrs: {
+            text: {
+                'font-size': 13, 'font-weight': 'normal', 'text-anchor' : 'start'
+            },
+            '.passage-text': {
+                text: text,
+                'ref-x': 5,
+                'ref-y': Constants.CHOICE_HEIGHT + 5,
+            },
+            '.passage-title-text': {
+                text: Constants.DEFAULT_TITLE,
+                'font-weight': 'bold',
+                'ref-x': 5,
+                'ref-y': 0.05
+
+            },
             innerType: {typeText : 'input'},
             //have to put this here otherwise it gets overwritten by Rect/text attrs
             '.event-label': {
                 text: "Modify Events",
                 'fill': "#000000",
                 'font-size': 7,
-                'ref-x': 1.1,
-                'ref-y': 4,
+                'ref-x': 5,
+                'ref-y': 5,
                 'font-family': '',
                 'text-anchor': 'start',
             }

@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 class Home extends React.Component {
   render() {
     return (
-    	<div>
+      <div>
         <div className='front-banner'>
           <div className='container'>
             <div>

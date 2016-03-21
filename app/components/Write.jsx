@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
 import Graph from './Write/Graph';
 import Sidebar from './Write/Sidebar';
+import AttributeSidebar from './Write/AttributeSidebar';
 
 var data = {
     "metadata":
@@ -71,16 +72,31 @@ var data = {
 };
 
 class Write extends React.Component {
-  handleSubmit(event) {
+    constructor(props) {
+        super(props);
+        this.onClickAttribute = this.onClickAttribute.bind(this);
+        this.state = {hiddenAttr: true};
+    }
+
+    componentDidMount() {
+        console.log(this._graph);
+        console.log($(ReactDOM.findDOMNode(this._graph)).width());
+    }
+
+    onClickAttribute(event){
         event.preventDefault();
+        this.setState({hiddenAttr: !this.state.hiddenAttr});
     }
 
     render() {
         return (
             <div>
-                <Sidebar/>
+                <div className={this.state.hiddenAttr ? "hidden" : ""}>
+                    <AttributeSidebar onClickAttribute={this.onClickAttribute}/>
+                </div>
+                <Sidebar onClickAttribute={this.onClickAttribute}/>
                 <div className='main-content container write-container'>
-                    <Graph/>
+                    <Graph ref={(callback) => this._graph = callback}/>
                 </div>
             </div>
         )

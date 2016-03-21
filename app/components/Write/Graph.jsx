@@ -1,26 +1,37 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import joint, { V, g } from 'jointjs';
 import _ from 'lodash';
+import joint, { V, g } from 'jointjs';
 import PassageChoice, {Choice} from './PassageChoice';
 import Constants from './Constants';
 import QuillEditor from './QuillEditor';
 import Quill from 'quill';
-
+// import svgPanZoom from 'svg-pan-zoom';
 // Create a custom element.
 // ------------------------
 
 joint.shapes.story = {};
 joint.shapes.story.Passage = joint.shapes.basic.Rect.extend({
-    markup: '<g class="rotatable"><g class="scalable"><rect/></g><text/></g><g class="events"><rect class="event-body"/><text class="event-label"/></g>',
+    toolMarkup: ['<g class="element-tools">',
+        '<g class="element-tool-remove"><circle fill="red" r="7"/>',
+        '<path transform="scale(.5) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
+        '<title>Remove this passage</title>',
+        '</g>',
+        '</g>'].join(''),
+    titleMarkup: '<g class="passage-title-box"><rect class="passage-title"/><text class="passage-title-text"/></g>',
+    markup: '<g class="rotatable"><g class="scalable"><rect/></g><text class="passage-text"/></g><g class="events"><rect class="event-body"/><text class="event-label"/></g>',
 
     defaults: joint.util.deepSupplement({
         type: 'story.Passage',
         attrs: {
-            rect: { stroke: 'none', 'fill-opacity': 0 },
+            rect: { fill: '#ffffff', 'stroke-width': 1 },
+            '.passage-title': {
+                width: Constants.PASSAGE_WIDTH,
+                height: Constants.CHOICE_HEIGHT,
+            },
             '.events': {
-                    'ref-x': Constants.PASSAGE_WIDTH*(-1/2),
-                    'ref-y': Constants.PASSAGE_HEIGHT*(1/2),
+                'ref-x': Constants.PASSAGE_WIDTH*(-1/2),
+                'ref-y': Constants.PASSAGE_HEIGHT*(1/2),
             },
             '.event-body' : {
                 width: Constants.PASSAGE_WIDTH/2,
@@ -33,52 +44,41 @@ joint.shapes.story.Passage = joint.shapes.basic.Rect.extend({
     }, joint.shapes.basic.Rect.prototype.defaults)
 });
 
-// Create a custom view for that element that displays an HTML div above it.
-// -------------------------------------------------------------------------
-
 joint.shapes.story.PassageView = joint.dia.ElementView.extend({
 
-    template: [
-        '<div class="passage-element">',
-        '<button class="delete">x</button>',
-        '<label></label>',
-        '<hr/>',
-        '<p></p>',
-        '</div>'
-    ].join(''),
-
     initialize: function() {
-        _.bindAll(this, 'updateBox');
-        joint.dia.ElementView.prototype.initialize.apply(this, arguments);
-
-        this.$box = $(_.template(this.template)());
-        this.$box.find('.delete').on('click', _.bind(this.model.remove, this.model));
-        // Update the box position whenever the underlying model changes.
-        this.model.on('change', this.updateBox, this);
-        // Remove the box when the model gets removed from the graph.
-        this.model.on('remove', this.removeBox, this);
-
-        this.updateBox();
+        joint.shapes.devs.ModelView.prototype.initialize.apply(this, arguments);
     },
 
-    render: function() {
-        joint.dia.ElementView.prototype.render.apply(this, arguments);
-        this.paper.$el.prepend(this.$box);
-        this.updateBox();
+    render: function () {
+        joint.shapes.devs.ModelView.prototype.render.apply(this, arguments);
+
+        this.renderTitle();
+        this.renderTools();
+        this.update();
+
         return this;
     },
-    updateBox: function() {
-        // Set the position and dimension of the box so that it covers the JointJS element.
-        var bbox = this.model.getBBox();
-        // Example of updating the HTML with a data stored in the cell model.
-        this.$box.find('label').text(this.model.get('label'));
-        this.$box.find('p').text(this.model.get('text'));
-        // this.$box.find('span').text(this.model.get('select'));
-        this.$box.css({ width: bbox.width, height: bbox.height, left: bbox.x, top: bbox.y, transform: 'rotate(' + (this.model.get('angle') || 0) + 'deg)' });
+
+    renderTitle: function() {
+        var titleMarkup = this.model.titleMarkup || this.model.get('titleMarkup');
+        if (titleMarkup) {
+            var nodes = V(titleMarkup);
+            V(this.el).append(nodes);
+        }
+        return this;
     },
-    removeBox: function(evt) {
-        this.$box.remove();
-    }
+
+    renderTools: function () {
+
+        var toolMarkup = this.model.toolMarkup || this.model.get('toolMarkup');
+        if (toolMarkup) {
+            var nodes = V(toolMarkup);
+            V(this.el).append(nodes);
+        }
+
+        return this;
+    },
 });
 
 
@@ -103,7 +103,7 @@ joint.shapes.story.ChoiceElement = joint.shapes.devs.Model.extend({
     toolMarkup: ['<g class="element-tools">',
         '<g class="element-tool-remove"><circle fill="red" r="7"/>',
         '<path transform="scale(.5) translate(-16, -16)" d="M24.778,21.419 19.276,15.917 24.777,10.415 21.949,7.585 16.447,13.087 10.945,7.585 8.117,10.415 13.618,15.917 8.116,21.419 10.946,24.248 16.447,18.746 21.948,24.248z"/>',
-        '<title>Remove this element from the model</title>',
+        '<title>Remove this choice</title>',
         '</g>',
         '</g>'].join(''),
 
@@ -226,7 +226,7 @@ class Graph extends React.Component {
     buildNewGraph(graph) {
         var PassageChoice1 = new PassageChoice(Constants.PASSAGE_FIRST_POSITION_X, Constants.PASSAGE_FIRST_POSITION_Y,
             Constants.PASSAGE_WIDTH, Constants.PASSAGE_HEIGHT,
-            Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED, true);
+            Constants.DEFAULT_TITLE, this.shortenContent(Constants.DEFAULT_PASSAGE, Constants.MAX_CHAR_PASSAGE), true);
 
         graph.addCells([PassageChoice1.passage, PassageChoice1.choice, PassageChoice1.addChoice]);
 
@@ -248,6 +248,33 @@ class Graph extends React.Component {
             passage.choices = [];
         }
         passage.choices.push(newChoice);
+    }
+
+    onMouseScroll() {
+        this.paper.$el.on('mousewheel DOMMouseScroll', function(e) {
+            e.preventDefault();
+            e = e.originalEvent;
+
+            var delta = Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail))) / 50;
+            var offsetX = (e.offsetX || e.clientX - $(this).offset().left); // offsetX is not defined in FF
+            var offsetY = (e.offsetY || e.clientY - $(this).offset().top); // offsetY is not defined in FF
+            var p = this.offsetToLocalPoint(offsetX, offsetY);
+            var newScale = V(this.paper.viewport).scale().sx + delta; // the current paper scale changed by delta
+
+            if (newScale > 0.4 && newScale < 2) {
+                this.paper.setOrigin(0, 0); // reset the previous viewport translation
+                this.paper.scale(newScale, newScale, p.x, p.y);
+            }
+        }.bind(this));
+    }
+
+    offsetToLocalPoint(x, y) {
+        var svgPoint = this.paper.svg.createSVGPoint();
+        svgPoint.x = x;
+        svgPoint.y = y;
+        // Transform point into the viewport coordinate system.
+        var pointTransformed = svgPoint.matrixTransform(this.paper.viewport.getCTM().inverse());
+        return pointTransformed;
     }
 
     onAddPassage() {
@@ -305,29 +332,38 @@ class Graph extends React.Component {
         this.paper.on('cell:pointerdown', function(cellView, evt, x, y){
             if (evt.target.parentNode.getAttribute('class') === 'element-tool-remove'){
                 //remove the choice from storyData
-                var passageId = this.graph.getCell(cellView.model.id).get('parent');
+                if (cellView.model instanceof joint.shapes.story.ChoiceElement){
+                    var passageId = this.graph.getCell(cellView.model.id).get('parent');
 
-                var passageBox = this.graph.getCell(passageId);
-                var isBelow = false;
+                    var passageBox = this.graph.getCell(passageId);
+                    var isBelow = false;
 
-                //move other choices up
-                _.forEach(passageBox.getEmbeddedCells(), function(value, index) {
-                    if (index == 0 || isBelow){
-                        value.translate(0, Constants.CHOICE_HEIGHT*(-1));
-                    }
-                    if (value.id == cellView.model.id){
-                        isBelow = true;
-                    }
-                });
+                    //move other choices up
+                    _.forEach(passageBox.getEmbeddedCells(), function(value, index) {
+                        if (index == 0 || isBelow){
+                            value.translate(0, Constants.CHOICE_HEIGHT*(-1));
+                        }
+                        if (value.id == cellView.model.id){
+                            isBelow = true;
+                        }
+                    });
 
-                var passage = _.find(this.storyData.content.passages, { 'id': passageId });
-                _.remove(passage.choices, function(n){
-                    return n.id === cellView.model.id;
-                });
+                    var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+                    _.remove(passage.choices, function(n){
+                        return n.id === cellView.model.id;
+                    });
+                }
+
+                if (cellView.model instanceof joint.shapes.story.Passage){
+                    _.remove(this.storyData.content.passages, function(n){
+                        return n.id === cellView.model.id;
+                    });
+                }
 
                 //remove the cell from graph
                 cellView.model.remove();
             }
+
         }.bind(this));
 
         //TODO: prevent deleting the starting passage or display warning
@@ -455,7 +491,7 @@ class Graph extends React.Component {
 
                 setTimeout(function (){
                     $('.ql-editor').focus();
-                }, 1000);
+                }, 500);
 
                 var passageData = _.find(this.storyData.content.passages, { 'id': evt.model.id });
 
@@ -471,12 +507,14 @@ class Graph extends React.Component {
                     var passage = this.passageEditor.getHTML();
                     var passageShortened = this.shortenContent(this.passageEditor.getText(), Constants.MAX_CHAR_PASSAGE);
 
-                    evt.$box.find('label').text(titleShortened);
-                    evt.$box.find('p').text(passageShortened);
+                    // evt.$box.find('label').text(titleShortened);
+                    // evt.$box.find('p').text(passageShortened);
+                    evt.model.attr('.passage-text/text', passageShortened);
+                    evt.model.attr('.passage-title-text/text', titleShortened);
 
                     //update graph
-                    evt.model.attributes.label = titleShortened;
-                    evt.model.attributes.text = passageShortened;
+                    // evt.model.attributes.label = titleShortened;
+                    // evt.model.attributes.text = passageShortened;
 
                     //update storyData
                     passageData.title = title;
@@ -491,13 +529,14 @@ class Graph extends React.Component {
     }
 
     setupListeners() {
+        // this.onMouseScroll();
         this.onAddPassage();
         this.onChangeLink();
         this.onRemovePassage();
         this.onDblClickPassage();
         this.onDblClickChoice();
         this.onClickAddChoice();
-        this.onMovePassage();
+        // this.onMovePassage();
 
         //save to localStorage on graph changes
         this.graph.on('batch:stop batch:start add remove', function(eventName, cell) {
@@ -563,8 +602,8 @@ class Graph extends React.Component {
         var width = size.width;
         this.paper = new joint.dia.Paper({
             el: this.paperDiv,
-            width: width || $('.container').width(),
-            height: height || $('.container').height(),
+            width: $('.container').width(),
+            height: 800,
             model: this.graph,
             interactive: function(cellView) {
                 //prevent choice box dragging
@@ -609,15 +648,61 @@ class Graph extends React.Component {
             this.graph.fromJSON(graphJSON);
         } else this.graph = this.buildNewGraph(this.graph);
 
+        this.currentScale = 1;
+        this.setupPanZoom();
 
     }
 
-    resizePaper(cell){
-        var x = Constants.PASSAGE_FIRST_POSITION_X;
-        var y = Constants.PASSAGE_FIRST_POSITION_Y;
+    setupPanZoom(){
+        var targetElement = this.paperDiv;
+        var that = this;
+        this.panAndZoom = svgPanZoom(targetElement.children()[0],
+        {
+            viewportSelector: $(targetElement.children()[0]).children()[0],
+            fit: false,
+            center: false,
+            zoomScaleSensitivity: 0.4,
+            dblClickZoomEnabled: false,
+            panEnabled: false,
+            onZoom: function(scale){
+                that.currentScale = scale;
+            }
+        });
 
-        x = cell.attributes.position.x + Constants.PASSAGE_TRANSLATE_X;
-        y = cell.attributes.position.y;
+        this.paper.on('blank:pointerdown', function (evt, x, y) {
+            this.panAndZoom.enablePan();
+        }.bind(this));
+
+        //Disable pan when the mouse button is released
+        this.paper.on('cell:pointerup blank:pointerup', function(cellView, event) {
+          this.panAndZoom.disablePan();
+        }.bind(this));
+    }
+
+    zoomIn(){
+        this.panAndZoom.zoomIn();
+    }
+
+    zoomOut(){
+        this.panAndZoom.zoomOut();
+    }
+
+    resetZoom(){
+        this.panAndZoom.resetZoom();
+        this.panAndZoom.resetPan();
+    }
+
+    updateLinks(){
+        var allLinks = this.graph.getLinks();
+        _.forEach(allLinks, function(link){
+            this.paper.findViewByModel(link).update();
+
+        }.bind(this));
+    }
+
+    resizePaper(cell){
+        var x = cell.get('position').x + Constants.PASSAGE_TRANSLATE_X;
+        var y = cell.get('position').y;
 
         x += Constants.PASSAGE_WIDTH * 1.2;
         y += Constants.PASSAGE_HEIGHT * 1.2;
@@ -651,12 +736,12 @@ class Graph extends React.Component {
             x = lastCell.attributes.position.x + Constants.PASSAGE_TRANSLATE_X;
             y = lastCell.attributes.position.y;
 
-            this.resizePaper(lastCell);
+            // this.resizePaper(lastCell);
 
         }
         var newPassage = new PassageChoice(x, y,
             Constants.PASSAGE_WIDTH, Constants.PASSAGE_HEIGHT,
-            Constants.DEFAULT_TITLE, Constants.DEFAULT_PASSAGE_SHORTENED);
+            Constants.DEFAULT_TITLE, this.shortenContent(Constants.DEFAULT_PASSAGE, Constants.MAX_CHAR_PASSAGE));
 
         newPassage.passage.embed(newPassage.addChoice);
         this.graph.addCell([newPassage.passage, newPassage.addChoice]);
@@ -667,7 +752,17 @@ class Graph extends React.Component {
     render() {
         return (
             <div>
-            <button type="button" className="btn btn-primary" onClick={this.addPassage.bind(this)}>Add Passage</button>
+            <div className="btn-group diagram-control" role="group">
+                <button type="button" className="btn btn-success" onClick={this.addPassage.bind(this)}>Add Passage</button>
+                <button type="button" className="btn btn-success" onClick={this.updateLinks.bind(this)}>Update Links</button>
+            </div>
+
+            <div className="btn-group diagram-control pull-right" role="group">
+                <span className="glyphicon glyphicon-zoom-in" aria-hidden="true" onClick={this.zoomIn.bind(this)}></span>
+                <span className="glyphicon glyphicon-zoom-out" aria-hidden="true" onClick={this.zoomOut.bind(this)}></span>
+                <span className="glyphicon glyphicon-refresh" aria-hidden="true" onClick={this.resetZoom.bind(this)}></span>
+            </div>
+
             <div className="modal" id="passageModal">
               <div className="modal-dialog" role="document">
                 <div className="modal-content">

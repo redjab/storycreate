@@ -20,7 +20,10 @@ var dependencies = [
   'react',
   'react-dom',
   'react-router',
-  'underscore'
+  'underscore',
+  'lodash',
+  'jointjs',
+  'react-bootstrap-table',
 ];
 
 var browserifyConfig = {
@@ -39,7 +42,8 @@ gulp.task('vendor', function() {
     'bower_components/jquery/dist/jquery.js',
     'bower_components/bootstrap/dist/js/bootstrap.js',
     'bower_components/magnific-popup/dist/jquery.magnific-popup.js',
-    'bower_components/toastr/toastr.js'
+    'bower_components/toastr/toastr.js',
+    'node_modules/svg-pan-zoom/dist/svg-pan-zoom.js'
   ]).pipe(concat('vendor.js'))
     .pipe(gulpif(production, uglify({ mangle: false })))
     .pipe(gulp.dest('public/js'));
