@@ -79,8 +79,6 @@ class Write extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this._graph);
-        console.log($(ReactDOM.findDOMNode(this._graph)).width());
     }
 
     onClickAttribute(event){

@@ -6,6 +6,8 @@ import PassageChoice, {Choice} from './PassageChoice';
 import Constants from './Constants';
 import QuillEditor from './QuillEditor';
 import Quill from 'quill';
+import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
+
 // import svgPanZoom from 'svg-pan-zoom';
 // Create a custom element.
 // ------------------------
@@ -221,6 +223,7 @@ class Graph extends React.Component {
     constructor(props) {
         super(props);
         this.graph = new joint.dia.Graph;
+        this.state = {currentConditions: [], currentEvents: []};
     }
 
     buildNewGraph(graph) {
@@ -325,6 +328,34 @@ class Graph extends React.Component {
             localStorage.setItem(Constants.DEFAULT_STORY_DATA, JSON.stringify(this.storyData));
             }
         }.bind(this));
+    }
+
+    onClickHover(){
+        this.paper.on('cell:pointerdown', function(cellView, evt, x, y) {
+            var parentClass = evt.target.parentNode.getAttribute('class');
+            if(parentClass === 'conditions' || parentClass === 'events'){
+                this.refreshAttributeOptions();
+                var passageId = this.graph.getCell(cellView.model.id).get('parent');
+                var passage = _.find(this.storyData.content.passages, { 'id': passageId });
+
+                var choice = _.find(passage.choices, {'id' : cellView.model.id});
+                var linkTo = choice.linkTo[0] || {conditions:[], events:[]};
+
+                if (parentClass === 'conditions'){
+                    var conditions = linkTo.conditions;
+                    $('#conditionModal').modal('show');
+                    this.setState({currentConditions: conditions});
+                    this.currentConditions = conditions;
+                }
+
+                if (parentClass === 'events'){
+                    var events = linkTo.events;
+                    $('#eventModal').modal('show');
+                    this.setState({currentEvents: events});
+                    this.currentEvents = events;
+                }
+            }
+        }.bind(this))
     }
 
     onRemovePassage(){
@@ -445,7 +476,7 @@ class Graph extends React.Component {
                     var newChoice = {
                                         "id": choiceBox.id,
                                         "text": choiceData,
-                                        "linkTo": []
+                                        "linkTo": [{conditions: [], events: []}]
                                     }
                     this.addNewChoiceToStoryData(evt.model.get('parent'), newChoice);
                     addChoiceBox.translate(0, Constants.CHOICE_HEIGHT);
@@ -536,6 +567,7 @@ class Graph extends React.Component {
         this.onDblClickPassage();
         this.onDblClickChoice();
         this.onClickAddChoice();
+        this.onClickHover();
         // this.onMovePassage();
 
         //save to localStorage on graph changes
@@ -563,6 +595,11 @@ class Graph extends React.Component {
         localStorage.setItem(Constants.DEFAULT_GRAPH + "Size", JSON.stringify(this.paper.getArea()));
     }
 
+    getAttributes(){
+        var attributes = JSON.parse(localStorage.getItem(Constants.DEFAULT_ATTR_DATA)) || {attributes: []}
+        return attributes.attributes;
+    }
+
     initializeQuill(){
           this.passageEditor = new Quill('#quill-passage', {
               modules: {
@@ -576,26 +613,8 @@ class Graph extends React.Component {
 
     componentDidMount() {
         this.initializeQuill();
-        this.storyData = JSON.parse(localStorage.getItem(Constants.DEFAULT_STORY_DATA)) || {
-            "metadata":
-            {
-                "id": 1,
-                "title": Constants.DEFAULT_STORY_NAME,
-                "author": Constants.DEFAULT_AUTHOR,
-                "created": Date.now(),
-                "updated": Date.now(),
-                "options":
-                {
-                    "allowSave": true,
-                    "publish": true
-                }
-            },
-            "content":
-            {
-                "attribute":[],
-                "passages":[]
-            }
-        };
+        this.storyData = JSON.parse(localStorage.getItem(Constants.DEFAULT_STORY_DATA)) || Constants.DEFAULT_STORY;
+
         this.paperDiv = $(ReactDOM.findDOMNode(this.refs.placeholder));
         var size = JSON.parse(localStorage.getItem(Constants.DEFAULT_GRAPH + "Size")) || {};
         var height = size.height;
@@ -650,6 +669,8 @@ class Graph extends React.Component {
 
         this.currentScale = 1;
         this.setupPanZoom();
+        this.setupConditionTable();
+        this.setupEventTable();
 
     }
 
@@ -749,6 +770,163 @@ class Graph extends React.Component {
         this.paper.findViewByModel(newPassage.passage).highlight();
     }
 
+    /***
+    Setup condition table
+    ***/
+    handleAddRowCondition(e){
+        e.preventDefault();
+        var key = this.state.currentConditions.length + 1;
+        var defaultRow = {
+            id: key,
+            name: "",
+            compare: "",
+            value: "",
+        }
+        if (this._conditionTable){
+            if (key === 1){
+                this._conditionTable.handleAddRowAtBegin(defaultRow);
+            } else {
+                this._conditionTable.handleAddRow(defaultRow);
+            }
+        }
+    }
+    onAfterSaveCellCondition(row, cellName, cellValue){
+        var condition = _.find(this.currentConditions, { 'id': row.id });
+        condition.name = row.name;
+        condition.compare = row.compare;
+        condition.value = row.value;
+        this.saveStoryLocal();
+    }
+
+    onAfterDeleteRowCondition(rowKeys){
+        _.remove(this.currentConditions, function(n){
+            return _.includes(rowKeys, n.id)
+        }, this);
+        this.saveStoryLocal();
+    }
+
+    onAfterInsertRowCondition(row){
+        var newCondition = {
+            id: row.id,
+            name: row.name,
+            compare: row.compare,
+            value: row.value
+        }
+        this.currentConditions.push(newCondition);
+        this.saveStoryLocal();
+    }
+
+    setupConditionTable(){
+        this.tableOptionsCondition = {
+            afterInsertRow: this.onAfterInsertRowCondition.bind(this),
+            afterDeleteRow: this.onAfterDeleteRowCondition.bind(this)
+        }
+        this.cellEditPropCondition = {
+            mode: "click",
+            blurToSave: true,
+            afterSaveCell: this.onAfterSaveCellCondition.bind(this)
+        }
+
+        this.selectRowPropCondition = {
+          mode: "checkbox",
+          clickToSelect: true
+        };
+
+        this.compareOptionsCondition = {
+            type: 'select',
+            options: {
+                values: ["=", ">", "<", ">=", "<="]
+            }
+        }
+        this.refreshAttributeOptions();
+    }
+
+    /***
+    Setup event table
+    ***/
+    handleAddRowEvent(e){
+        e.preventDefault();
+        var key = this.state.currentEvents.length + 1;
+        var defaultRow = {
+            id: key,
+            name: "",
+            modifyBy: "",
+            value: "",
+        }
+        if (this._eventTable){
+            if (key === 1){
+                this._eventTable.handleAddRowAtBegin(defaultRow);
+            } else {
+                this._eventTable.handleAddRow(defaultRow);
+            }
+        }
+    }
+    onAfterSaveCellEvent(row, cellName, cellValue){
+        var event = _.find(this.currentEvents, { 'id': row.id });
+        event.name = row.name;
+        event.modifyBy = row.modifyBy;
+        event.value = row.value;
+        this.saveStoryLocal();
+    }
+
+    onAfterDeleteRowEvent(rowKeys){
+        _.remove(this.currentEvents, function(n){
+            return _.includes(rowKeys, n.id)
+        }, this);
+        this.saveStoryLocal();
+    }
+
+    onAfterInsertRowEvent(row){
+        var newEvent = {
+            id: row.id,
+            name: row.name,
+            modifyBy: row.compare,
+            value: row.value
+        }
+        this.currentEvents.push(newEvent);
+        this.saveStoryLocal();
+    }
+
+    setupEventTable(){
+        this.tableOptionsEvent = {
+            afterInsertRow: this.onAfterInsertRowEvent.bind(this),
+            afterDeleteRow: this.onAfterDeleteRowEvent.bind(this)
+        }
+        this.cellEditPropEvent = {
+            mode: "click",
+            blurToSave: true,
+            afterSaveCell: this.onAfterSaveCellEvent.bind(this)
+        }
+
+        this.selectRowPropEvent = {
+          mode: "checkbox",
+          clickToSelect: true
+        };
+
+        this.modifyByOptionsEvent = {
+            type: 'select',
+            options: {
+                values: ["=", "+", "-", "*", "/"]
+            }
+        }
+        this.refreshAttributeOptions();
+    }
+
+    refreshAttributeOptions(){
+        var attributes = [];
+        _.forEach(this.getAttributes(), function(value, key) {
+            attributes.push(value.name);
+        })
+
+        var attributeOptions = {
+            type: 'select',
+            options: {
+                values: attributes
+            }
+        }
+        this.setState({attributeOptions: attributeOptions});
+    }
+
     render() {
         return (
             <div>
@@ -768,7 +946,7 @@ class Graph extends React.Component {
                 <div className="modal-content">
                   <div className="modal-header">
                     <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 className="modal-title" id="myModalLabel">Edit Passage</h4>
+                    <h4 className="modal-title">Edit Passage</h4>
                   </div>
                   <div className="modal-body">
                     <form className="form-horizontal" role="form">
@@ -789,7 +967,7 @@ class Graph extends React.Component {
                 <div className="modal-content">
                   <div className="modal-header">
                     <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                    <h4 className="modal-title" id="myModalLabel">Edit Choice</h4>
+                    <h4 className="modal-title">Edit Choice</h4>
                   </div>
                   <div className="modal-body">
                     <form className="form-horizontal" role="form">
@@ -799,6 +977,66 @@ class Graph extends React.Component {
                   <div className="modal-footer">
                     <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
                     <button type="button" className="btn btn-primary submit-choice">Save changes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal" id="conditionModal">
+              <div className="modal-dialog" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 className="modal-title">Modify Conditions</h4>
+                  </div>
+                  <div className="modal-body">
+                <button type="button" className="btn btn-sm btn-success pull-right" onClick={this.handleAddRowCondition.bind(this)}>Add Condition</button>
+                <BootstrapTable
+                    ref={(callback) => this._conditionTable = callback}
+                    striped={true}
+                    data={this.state.currentConditions}
+                    cellEdit={this.cellEditPropCondition}
+                    selectRow={this.selectRowPropCondition}
+                    options={this.tableOptionsCondition}
+                    deleteRow={true}>
+                    <TableHeaderColumn dataField="id" isKey={true} hidden={true}>Condition ID</TableHeaderColumn>
+                    <TableHeaderColumn dataField="name" editable={this.state.attributeOptions}>Attribute</TableHeaderColumn>
+                    <TableHeaderColumn dataField="compare" editable={this.compareOptionsCondition}>Compare</TableHeaderColumn>
+                    <TableHeaderColumn dataField="value">Value</TableHeaderColumn>
+                </BootstrapTable>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal" id="eventModal">
+              <div className="modal-dialog" role="document">
+                <div className="modal-content">
+                  <div className="modal-header">
+                    <button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 className="modal-title">Modify Events</h4>
+                  </div>
+                  <div className="modal-body">
+                <button type="button" className="btn btn-sm btn-success pull-right" onClick={this.handleAddRowEvent.bind(this)}>Add Event</button>
+                <BootstrapTable
+                    ref={(callback) => this._eventTable = callback}
+                    striped={true}
+                    data={this.state.currentEvents}
+                    cellEdit={this.cellEditPropEvent}
+                    selectRow={this.selectRowPropEvent}
+                    options={this.tableOptionsEvent}
+                    deleteRow={true}>
+                    <TableHeaderColumn dataField="id" isKey={true} hidden={true}>Event ID</TableHeaderColumn>
+                    <TableHeaderColumn dataField="name" editable={this.state.attributeOptions}>Attribute</TableHeaderColumn>
+                    <TableHeaderColumn dataField="modifyBy" editable={this.modifyByOptionsEvent}>Modify By</TableHeaderColumn>
+                    <TableHeaderColumn dataField="value">Value</TableHeaderColumn>
+                </BootstrapTable>
+                  </div>
+                  <div className="modal-footer">
+                    <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
                   </div>
                 </div>
               </div>

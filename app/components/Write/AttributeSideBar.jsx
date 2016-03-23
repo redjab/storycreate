@@ -2,53 +2,79 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
 import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
-
-var products = [
-{
-    id: 1,
-    name: "Product1",
-    price: 120
-},{
-    id: 2,
-    name: "Product2",
-    price: 80
-},{
-    id: 3,
-    name: "Product3",
-    price: 207
-},{
-    id: 4,
-    name: "Product4",
-    price: 100
-},{
-    id: 5,
-    name: "Product5",
-    price: 150
-},{
-    id: 6,
-    name: "Product6",
-    price: 160
-}
-];
-
-
-function onAfterSaveCell(row, cellName, cellValue){
-  console.log("Save cell '"+cellName+"' with value '"+cellValue+"'");
-  console.log("Thw whole row :");
-  console.log(row);
-}
-var cellEditProp = {
-  mode: "click",
-  blurToSave: true,
-  afterSaveCell: onAfterSaveCell
-}
+import Constants from './Constants';
+import _ from 'lodash';
 
 class AttributeSidebar extends React.Component {
     constructor(props) {
         super(props);
+        this.state = {attributes: []};
+        this.handleAddRow = this.handleAddRow.bind(this);
+    }
+
+    componentDidMount() {
+        this.attributeData = JSON.parse(localStorage.getItem(Constants.DEFAULT_ATTR_DATA)) || {attributes: []};
+        this.setState({attributes: this.attributeData.attributes});
+    }
+
+    onAfterSaveCell(row, cellName, cellValue){
+        var attribute = _.find(this.attributeData.attributes, { 'id': row.id });
+        attribute.name = row.name;
+        attribute.default = row.default;
+        attribute.persistent = row.persistent;
+        this.saveStoryLocal();
+    }
+
+    onAfterDeleteRow(rowKeys){
+        _.remove(this.attributeData.attributes, function(n){
+            return _.includes(rowKeys, n.id)
+        }, this);
+        this.saveStoryLocal();
+    }
+
+    onAfterInsertRow(row){
+        var newAttribute = {
+            id: row.id,
+            name: row.name,
+            default: row.default,
+            persistent: row.persistent
+        }
+        this.attributeData.attributes.push(newAttribute);
+        this.saveStoryLocal();
+    }
+
+    handleAddRow(e){
+        e.preventDefault();
+        var key = this.state.attributes.length + 1;
+        var defaultRow = {
+            id: key,
+            name: "",
+            default: "",
+            persistent: "No",
+        }
+        if (this._table){
+            if (key === 1){
+                this._table.handleAddRowAtBegin(defaultRow);
+            } else {
+                this._table.handleAddRow(defaultRow);
+            }
+        }
+    }
+
+    saveStoryLocal() {
+        localStorage.setItem(Constants.DEFAULT_ATTR_DATA, JSON.stringify(this.attributeData));
     }
 
     render() {
+        var tableOptions = {
+            afterInsertRow: this.onAfterInsertRow.bind(this),
+            afterDeleteRow: this.onAfterDeleteRow.bind(this)
+        }
+        var cellEditProp = {
+            mode: "click",
+            blurToSave: true,
+            afterSaveCell: this.onAfterSaveCell.bind(this)
+        }
         return (
             <div id="attribute-sidebar-wrapper" className="sidebar">
                 <ul className="sidebar-nav">
@@ -57,18 +83,36 @@ class AttributeSidebar extends React.Component {
                     </li>
                 </ul>
                 <p>
-                    <Link to='/tutorial#terms'>What are attributes?</Link>
+                    <Link to='/tutorial#terms' target="_blank">What are attributes?</Link>
                 </p>
-                <BootstrapTable data={products} cellEdit={cellEditProp}>
-                    <TableHeaderColumn dataField="id" isKey={true} hidden={true}>Attribute ID</TableHeaderColumn>
+                <button type="button" className="btn btn-sm btn-success pull-right" onClick={this.handleAddRow.bind(this)}>Add Attribute</button>
+                <BootstrapTable
+                ref={(callback) => this._table = callback}
+                striped={true}
+                data={this.state.attributes}
+                cellEdit={cellEditProp}
+                deleteRow={true}
+                selectRow={selectRowProp}
+                options={tableOptions}>
+                    <TableHeaderColumn dataField="id" isKey={true} hidden={true} autoValue={true}>Attribute ID</TableHeaderColumn>
                     <TableHeaderColumn dataField="name">Name</TableHeaderColumn>
-                    <TableHeaderColumn dataField="price">Default</TableHeaderColumn>
-                    <TableHeaderColumn dataField="price">Type</TableHeaderColumn>
-                    <TableHeaderColumn dataField="price">Persistent</TableHeaderColumn>
+                    <TableHeaderColumn dataField="default">Default</TableHeaderColumn>
+                    <TableHeaderColumn dataField="persistent" editable={persistentOption}>Persistent</TableHeaderColumn>
                 </BootstrapTable>
             </div>
         )
     }
 }
+
+var persistentOption = {
+    type: 'checkbox',
+    options: {
+        values: 'Yes:No'
+    }
+}
+var selectRowProp = {
+  mode: "checkbox", // or checkbox
+  clickToSelect: true
+};
 
 export default AttributeSidebar;

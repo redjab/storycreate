@@ -20,7 +20,28 @@ var DEFAULT_STORY_NAME = "Untitled";
 var DEFAULT_AUTHOR = "Anonymous";
 var DEFAULT_GRAPH = DEFAULT_STORY_NAME + "_graph";
 var DEFAULT_STORY_DATA = DEFAULT_STORY_NAME + "_story";
+var DEFAULT_ATTR_DATA = DEFAULT_STORY_NAME + "_attribute";
 var DEFAULT_CHOICE_DATA = DEFAULT_STORY_NAME + "_choice";
+var DEFAULT_STORY = {
+            "metadata":
+            {
+                "id": 1,
+                "title": DEFAULT_STORY_NAME,
+                "author": DEFAULT_AUTHOR,
+                "created": Date.now(),
+                "updated": Date.now(),
+                "options":
+                {
+                    "allowSave": true,
+                    "publish": true
+                }
+            },
+            "content":
+            {
+                "attributes":[],
+                "passages":[]
+            }
+        };
 
 export default {
     MAX_CHAR_TITLE : MAX_CHAR_TITLE,
@@ -45,5 +66,7 @@ export default {
     DEFAULT_AUTHOR : DEFAULT_AUTHOR,
     DEFAULT_GRAPH : DEFAULT_GRAPH,
     DEFAULT_STORY_DATA : DEFAULT_STORY_DATA,
-    DEFAULT_CHOICE_DATA: DEFAULT_CHOICE_DATA
+    DEFAULT_ATTR_DATA: DEFAULT_ATTR_DATA,
+    DEFAULT_CHOICE_DATA: DEFAULT_CHOICE_DATA,
+    DEFAULT_STORY: DEFAULT_STORY
 }

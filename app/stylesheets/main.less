@@ -262,9 +262,13 @@ footer a {
 #sidebar-wrapper {
     width: 185px;
 }
-.sidebar a {
+.sidebar p a {
   color: white;
   font-style: italic;
+}
+
+.sidebar li a {
+  font-size: large;
 }
 
 .sidebar p {
@@ -272,9 +276,29 @@ footer a {
   padding-right: 10px;
 }
 
-.sidebar .editor {
+.react-bs-table-container .editor {
   visibility: visible;
 }
+
+/*@btn-primary-color: #dd4814;
+@btn-success-color: #38b44a;
+@btn-danger-color: #df382c;
+
+.react-bs-table-add-btn {
+  .button-variant(@btn-success-color; @btn-success-color; @btn-success-color) !important;
+  color: white !important;
+}
+
+.react-bs-table-tool-bar .btn-info {
+  .button-variant(@btn-primary-color; @btn-primary-color; @btn-primary-color) !important;
+  color: white !important;
+}
+
+.react-bs-table-tool-bar .btn-warning {
+  .button-variant(@btn-danger-color; @btn-danger-color; @btn-danger-color) !important;
+  color: white !important;
+}
+*/
 .sidebar-nav {
 /*    position: absolute;*/
     padding: 0;
@@ -299,12 +323,23 @@ footer a {
 .sidebar-nav .input-group {
     padding-left: 5px;
     padding-right: 5px;
+    z-index: 0;
 }
 
 @media(max-width:768px) {
     #sidebar-wrapper {
         width: 0;
     }
+}
+
+.react-bs-table-tool-bar .modal-dialog {
+  margin-top: 60px;
+}
+.react-bs-table {
+  background: white;
+}
+.modal-backdrop {
+  z-index: 0;
 }
 
 .hidden {
