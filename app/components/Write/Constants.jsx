@@ -1,28 +1,29 @@
-var MAX_CHAR_TITLE = 17;
-var MAX_CHAR_PASSAGE = 125;
-var MAX_CHAR_CHOICE = 17;
+const MAX_CHAR_TITLE = 17;
+const MAX_CHAR_PASSAGE = 125;
+const MAX_CHAR_CHOICE = 17;
 
-var DEFAULT_TITLE = "Untitled";
-var DEFAULT_PASSAGE = "Double click here to start writing and add choices. To branch your story, add a choice to this passage, and drag from the choice to a new passage."
-var DEFAULT_PASSAGE_SHORTENED = DEFAULT_PASSAGE.substring(0, MAX_CHAR_PASSAGE) + "...";
-var PASSAGE_HEIGHT = 150;
-var PASSAGE_WIDTH = 130;
+const DEFAULT_TITLE = "Untitled";
+const DEFAULT_PASSAGE = "Double click here to start writing and add choices. To branch your story, add a choice to this passage, and drag from the choice to a new passage."
+const DEFAULT_PASSAGE_SHORTENED = DEFAULT_PASSAGE.substring(0, MAX_CHAR_PASSAGE) + "...";
+const PASSAGE_HEIGHT = 150;
+const PASSAGE_WIDTH = 130;
 
-var PASSAGE_FIRST_POSITION_X = 80;
-var PASSAGE_FIRST_POSITION_Y = 80;
-var PASSAGE_TRANSLATE_X = 150;
+const PASSAGE_FIRST_POSITION_X = 80;
+const PASSAGE_FIRST_POSITION_Y = 80;
+const PASSAGE_TRANSLATE_X = 150;
 
-var CHOICE_HEIGHT = 30;
-var CHOICE_WIDTH = PASSAGE_WIDTH;
-var DEFAULT_CHOICE = "";
+const CHOICE_HEIGHT = 30;
+const CHOICE_WIDTH = PASSAGE_WIDTH;
+const DEFAULT_CHOICE = "";
 
-var DEFAULT_STORY_NAME = "Untitled";
-var DEFAULT_AUTHOR = "Anonymous";
-var DEFAULT_GRAPH = DEFAULT_STORY_NAME + "_graph";
-var DEFAULT_STORY_DATA = DEFAULT_STORY_NAME + "_story";
-var DEFAULT_ATTR_DATA = DEFAULT_STORY_NAME + "_attribute";
-var DEFAULT_CHOICE_DATA = DEFAULT_STORY_NAME + "_choice";
-var DEFAULT_STORY = {
+const DEFAULT_STORY_NAME = "Untitled";
+const DEFAULT_AUTHOR = "Anonymous";
+const DEFAULT_GRAPH = DEFAULT_STORY_NAME + "_graph";
+const DEFAULT_STORY_DATA = DEFAULT_STORY_NAME + "_story";
+const DEFAULT_ATTR_DATA = DEFAULT_STORY_NAME + "_attribute";
+const DEFAULT_CHOICE_DATA = DEFAULT_STORY_NAME + "_choice";
+const DEFAULT_LINK_TO = {conditions: [], events: []};
+const DEFAULT_STORY = {
             "metadata":
             {
                 "id": 1,
@@ -68,5 +69,6 @@ export default {
     DEFAULT_STORY_DATA : DEFAULT_STORY_DATA,
     DEFAULT_ATTR_DATA: DEFAULT_ATTR_DATA,
     DEFAULT_CHOICE_DATA: DEFAULT_CHOICE_DATA,
-    DEFAULT_STORY: DEFAULT_STORY
+    DEFAULT_LINK_TO: DEFAULT_LINK_TO,
+    DEFAULT_STORY: DEFAULT_STORY,
 }

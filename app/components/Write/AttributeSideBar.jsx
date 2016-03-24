@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
 import Constants from './Constants';
 import _ from 'lodash';
+import joint from 'jointjs';
 
 class AttributeSidebar extends React.Component {
     constructor(props) {
@@ -45,15 +46,15 @@ class AttributeSidebar extends React.Component {
 
     handleAddRow(e){
         e.preventDefault();
-        var key = this.state.attributes.length + 1;
+
         var defaultRow = {
-            id: key,
+            id: joint.util.uuid(),
             name: "",
             default: "",
             persistent: "No",
         }
         if (this._table){
-            if (key === 1){
+            if (this.state.attributes.length === 0){
                 this._table.handleAddRowAtBegin(defaultRow);
             } else {
                 this._table.handleAddRow(defaultRow);

@@ -237,7 +237,7 @@ class Graph extends React.Component {
         var newChoice = {
                             "id": PassageChoice1.choice.id,
                             "text": Constants.DEFAULT_CHOICE,
-                            "linkTo": []
+                            "linkTo": {conditions: [], events: []}
                         }
         this.addNewChoiceToStoryData(PassageChoice1.passage.id, newChoice);
         this.saveStoryLocal();
@@ -312,7 +312,7 @@ class Graph extends React.Component {
                 var passage = _.find(this.storyData.content.passages, { 'id': passageId });
                 var choice = _.find(passage.choices, { 'id' : source.id });
                 if (choice) {
-                    var newLinkTo = _.find(choice.linkTo, { 'id': target.id });
+                    var newLinkTo = choice.linkTo;
                     if (newLinkTo){
                         newLinkTo.id = target.id;
                     } else {
@@ -322,7 +322,7 @@ class Graph extends React.Component {
                             "conditions": [],
                             "events": []
                         }
-                        choice.linkTo.push(newLinkTo);
+                        choice.linkTo = newLinkTo;
                     }
                 }
             localStorage.setItem(Constants.DEFAULT_STORY_DATA, JSON.stringify(this.storyData));
@@ -339,7 +339,7 @@ class Graph extends React.Component {
                 var passage = _.find(this.storyData.content.passages, { 'id': passageId });
 
                 var choice = _.find(passage.choices, {'id' : cellView.model.id});
-                var linkTo = choice.linkTo[0] || {conditions:[], events:[]};
+                var linkTo = choice.linkTo || {conditions: [], events: []};
 
                 if (parentClass === 'conditions'){
                     var conditions = linkTo.conditions;
@@ -415,10 +415,7 @@ class Graph extends React.Component {
 
                     var choiceId = eventName.get('source').id;
                     var choice = _.find(passage.choices, { 'id' : choiceId });
-
-                    var linkTo = _.remove(choice.linkTo, function(n){
-                        return n.id == eventName.get('target').id;
-                    })
+                    choice.linkTo = {conditions: [], events: []};
                 }
             }
         }.bind(this));
@@ -457,11 +454,8 @@ class Graph extends React.Component {
                 $('.choice-input').val('');
 
                 $('.submit-choice').click(function(e){
-
-
                     var choiceData = $('.choice-input').val();
                     var choiceShortened = this.shortenContent(choiceData, Constants.MAX_CHAR_CHOICE);
-
 
                     var passageBox = this.graph.getCell(evt.model.get('parent'));
                     var addChoiceBox = passageBox.getEmbeddedCells()[0];
@@ -476,11 +470,13 @@ class Graph extends React.Component {
                     var newChoice = {
                                         "id": choiceBox.id,
                                         "text": choiceData,
-                                        "linkTo": [{conditions: [], events: []}]
+                                        "linkTo": {conditions: [], events: []}
                                     }
+                    console.log(Constants.DEFAULT_LINK_TO);
                     this.addNewChoiceToStoryData(evt.model.get('parent'), newChoice);
                     addChoiceBox.translate(0, Constants.CHOICE_HEIGHT);
                     this.saveGraphLocal();
+                    this.saveStoryLocal();
 
                     $('#choiceModal').modal('hide');
                 }.bind(this))
@@ -616,9 +612,6 @@ class Graph extends React.Component {
         this.storyData = JSON.parse(localStorage.getItem(Constants.DEFAULT_STORY_DATA)) || Constants.DEFAULT_STORY;
 
         this.paperDiv = $(ReactDOM.findDOMNode(this.refs.placeholder));
-        var size = JSON.parse(localStorage.getItem(Constants.DEFAULT_GRAPH + "Size")) || {};
-        var height = size.height;
-        var width = size.width;
         this.paper = new joint.dia.Paper({
             el: this.paperDiv,
             width: $('.container').width(),
@@ -656,8 +649,18 @@ class Graph extends React.Component {
             validateMagnet: function(cellView, magnet) {
                 // Note that this is the default behaviour. Just showing it here for reference.
                 // Disable linking interaction for magnets marked as passive (see below `.inPorts circle`).
+                var port = magnet.getAttribute('port');
+                var links = this.graph.getConnectedLinks(cellView.model, { outbound: true });
+                var portLinks = _.filter(links, function(o) {
+                    return o.get('source').port == port;
+                });
+                if(portLinks.length > 0) return false;
+                // Note that this is the default behaviour. Just showing it here for reference.
+                // Disable linking interaction for magnets marked as passive (see below `.inPorts circle`).
                 return magnet.getAttribute('magnet') !== 'passive';
-            }
+
+                return magnet.getAttribute('magnet') !== 'passive';
+            }.bind(this)
         }).bind(this);
 
         this.setupListeners();
@@ -775,15 +778,14 @@ class Graph extends React.Component {
     ***/
     handleAddRowCondition(e){
         e.preventDefault();
-        var key = this.state.currentConditions.length + 1;
         var defaultRow = {
-            id: key,
+            id: joint.util.uuid(),
             name: "",
             compare: "",
             value: "",
         }
         if (this._conditionTable){
-            if (key === 1){
+            if (this.state.currentConditions.length === 0){
                 this._conditionTable.handleAddRowAtBegin(defaultRow);
             } else {
                 this._conditionTable.handleAddRow(defaultRow);
@@ -848,7 +850,7 @@ class Graph extends React.Component {
         e.preventDefault();
         var key = this.state.currentEvents.length + 1;
         var defaultRow = {
-            id: key,
+            id: joint.util.uuid(),
             name: "",
             modifyBy: "",
             value: "",
