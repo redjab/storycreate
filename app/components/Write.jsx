@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import Graph from './Write/Graph';
 import Sidebar from './Write/Sidebar';
 import AttributeSidebar from './Write/AttributeSidebar';
+import Constants from './Write/Constants';
 
 var data = {
     "metadata":
@@ -90,9 +91,9 @@ class Write extends React.Component {
         return (
             <div>
                 <div className={this.state.hiddenAttr ? "hidden" : ""}>
-                    <AttributeSidebar onClickAttribute={this.onClickAttribute}/>
+                    <AttributeSidebar onClickAttribute={this.onClickAttribute} />
                 </div>
-                <Sidebar onClickAttribute={this.onClickAttribute}/>
+                <Sidebar onClickAttribute={this.onClickAttribute} story={Constants.DEFAULT_STORY_NAME}/>
                 <div className='main-content container write-container'>
                     <Graph ref={(callback) => this._graph = callback}/>
                 </div>

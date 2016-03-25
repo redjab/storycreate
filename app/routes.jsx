@@ -11,18 +11,20 @@ import Login from './components/Login';
 import About from './components/About';
 import Contact from './components/Contact';
 import Write from './components/Write';
+import Read from './components/Read';
 
 export default (
   <Route component={App}>
     <Route path='/' component={Home} />
-    <Route path='/about' component={About} />
-    <Route path='/contact' component={Contact} />
-    <Route path='/register' component={Register} />
-    <Route path='/login' component={Login} />
-    <Route path='/learn' component={LearnMore} />
-    <Route path='/tutorial' component={GettingStarted} />
-    <Route path='/read' component={ReadList} />
-    <Route path='/yours' component={YourStories} />
-    <Route path='/write' component={Write} />
+    <Route path='about' component={About} />
+    <Route path='contact' component={Contact} />
+    <Route path='register' component={Register} />
+    <Route path='login' component={Login} />
+    <Route path='learn' component={LearnMore} />
+    <Route path='tutorial' component={GettingStarted} />
+    <Route path='readList' component={ReadList} />
+    <Route path='yours' component={YourStories} />
+    <Route path='write' component={Write} />
+    <Route path='read/:isPreview/:story' component={Read} />
   </Route>
 );

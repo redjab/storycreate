@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-
+import {Link} from 'react-router'
 class Sidebar extends React.Component {
     render() {
         return (
@@ -13,7 +13,7 @@ class Sidebar extends React.Component {
                         <a href="#" onClick={this.props.onClickAttribute.bind(this)}>Attributes</a>
                     </li>
                     <li>
-                        <a href="#">Preview</a>
+                        <Link to={'/read/1/' + this.props.story}>Preview</Link>
                     </li>
                     <li>
                         <a href="#">Publish</a>
@@ -29,15 +29,6 @@ class Sidebar extends React.Component {
                         </span>
                     </div>
                 </ul>
-            </div>
-        )
-    }
-}
-
-class AttributePanel extends React.Component {
-    render(){
-        return(
-            <div>
             </div>
         )
     }

@@ -345,3 +345,46 @@ footer a {
 .hidden {
   display: none;
 }
+
+.read-container {
+  background: #BDBDBD;
+  font-size: 16px;
+  font-family: Baskerville, Georgia, Times, "Times New Roman", serif;
+}
+.read-passage {
+  background: white;
+  border-color: #ddd;
+  border-width: 1px;
+  /*border-radius: 4px 4px 0 0;*/
+  border-style: solid;
+  padding: 20px;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.5);
+}
+
+.read-container .row:first-child .read-passage {
+  margin-top: 20px;
+}
+
+.read-passage img {
+  padding: 10px;
+  display: block;
+  margin: 0 auto;
+}
+
+.read-choice {
+  padding-top: 10px;
+  font-size: 22px;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.read-choice:hover {
+  color: gray;
+}
+
+.read-choice-chosen {
+  font-style: italic;
+  font-weight: bold;
+  color: gray;
+  padding-top: 10px;
+}
