@@ -16,6 +16,7 @@ html {
 body {
   /* Margin bottom by footer height */
   margin-bottom: 180px;
+  z-index: 100;
 }
 
 footer {
@@ -78,7 +79,6 @@ footer a {
 }
 
 .main-content {
-  padding-top: 50px;
   padding-bottom: 15px;
 }
 
@@ -245,7 +245,7 @@ footer a {
     float:left;
     position: fixed;
     height: 100%;
-    margin-top: 50px;
+    margin-top: -52px;
     overflow-y: auto;
     background: #dd4814;
     -webkit-transition: all 0.5s ease;
@@ -261,6 +261,11 @@ footer a {
 
 #sidebar-wrapper {
     width: 185px;
+}
+
+.sidebar-padder {
+  height: 52px;
+  visibility: hidden;
 }
 .sidebar p a {
   color: white;
@@ -387,4 +392,8 @@ footer a {
   font-weight: bold;
   color: gray;
   padding-top: 10px;
+}
+
+.read-actions {
+  position: fixed;
 }

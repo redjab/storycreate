@@ -78,6 +78,7 @@ class AttributeSidebar extends React.Component {
         }
         return (
             <div id="attribute-sidebar-wrapper" className="sidebar">
+                <div className="sidebar-padder"/>
                 <ul className="sidebar-nav">
                     <li>
                         <a href="#" onClick={this.props.onClickAttribute.bind(this)}>&lt;&lt; Attributes</a>

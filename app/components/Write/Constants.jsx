@@ -51,6 +51,8 @@ class Constants {
                         "passages":[]
                     }
                 };
+        this.DEFAULT_READ_PROGRESS_EXT = "_read";
+        this.DEFAULT_READ_ATTR_EXT = "_readAttrs";
     }
 }
 

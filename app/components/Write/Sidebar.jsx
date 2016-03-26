@@ -5,6 +5,7 @@ class Sidebar extends React.Component {
     render() {
         return (
             <div id="sidebar-wrapper">
+                <div className="sidebar-padder"/>
                 <ul className="sidebar-nav">
                     <li>
                         <a href="#">Options</a>

@@ -10,7 +10,7 @@ class Choice extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this.props);
+        // console.log(this.props);
     }
 
     handleChoiceClick(e) {
@@ -19,7 +19,11 @@ class Choice extends React.Component {
             this.setState({clicked: true});
             var passageId = this.props.passageId;
             var choiceId = this.props.id;
-            this.props.handleChoiceClick(passageId, choiceId);
+
+            var conditions = this.props.linkTo.conditions;
+            var events = this.props.linkTo.events;
+
+            this.props.handleChoiceClick(passageId, choiceId, conditions, events);
         }
     }
     render() {

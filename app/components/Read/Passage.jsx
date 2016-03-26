@@ -11,13 +11,54 @@ class Passage extends React.Component {
         this.state = {choices: this.props.choices};
     }
 
-    handleChoiceClick(passageId, choiceId) {
-        this.props.handleChoiceClick(passageId);
+    handleChoiceClick(passageId, choiceId, conditions, events) {
+        this.props.handleChoiceClick(passageId, choiceId, events);
 
         var choices = _.remove(this.state.choices, function(value) {
             return value.id != choiceId;
         });
         this.setState((state) => { choices: choices });
+    }
+
+    componentDidMount() {
+        var attributes = this.props.attributes;
+        var choices = this.state.choices;
+
+        var filteredChoices = _.filter(choices, function(choice){
+            var linkTo = choice.linkTo;
+            var meetConditions = true;
+            _.forEach(linkTo.conditions, function(condition) {
+                var matchingAttribute = _.find(attributes, { 'name' : condition.name});
+                meetConditions = this.compareValues(matchingAttribute.default, condition.value, condition.compare);
+                if (!meetConditions) return false;
+            }.bind(this))
+            return meetConditions;
+        }.bind(this))
+
+        this.setState({choices: filteredChoices});
+    }
+
+    compareValues(first, second, operator){
+        switch (operator) {
+            case "=":
+                return first == second;
+                break;
+            case ">":
+                return first > second;
+                break;
+            case "<":
+                return first < second;
+                break;
+            case ">=":
+                return first >= second;
+                break;
+            case "<=":
+                return first == second;
+                break;
+            default:
+                return false;
+                break;
+        }
     }
 
     render() {
