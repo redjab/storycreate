@@ -8,11 +8,11 @@ class Passage extends React.Component {
     constructor(props) {
         super(props);
         this.handleChoiceClick = this.handleChoiceClick.bind(this);
-        this.state = {choices: this.props.choices};
+        this.state = {choices: []};
     }
 
     handleChoiceClick(passageId, choiceId, conditions, events) {
-        this.props.handleChoiceClick(passageId, choiceId, events);
+        this.props.handleChoiceClick(passageId, this.props.id, choiceId, events);
 
         var choices = _.remove(this.state.choices, function(value) {
             return value.id != choiceId;
@@ -20,11 +20,11 @@ class Passage extends React.Component {
         this.setState((state) => { choices: choices });
     }
 
-    componentDidMount() {
+    filterChoices(){
         var attributes = this.props.attributes;
-        var choices = this.state.choices;
+        var choices = this.props.choices;
 
-        var filteredChoices = _.filter(choices, function(choice){
+        return _.filter(choices, function(choice){
             var linkTo = choice.linkTo;
             var meetConditions = true;
             _.forEach(linkTo.conditions, function(condition) {
@@ -34,8 +34,17 @@ class Passage extends React.Component {
             }.bind(this))
             return meetConditions;
         }.bind(this))
+    }
 
-        this.setState({choices: filteredChoices});
+    componentDidMount() {
+        console.log(this.props.isBeingLoaded);
+        if (!this.props.isBeingLoaded){
+            var filteredChoices = this.filterChoices();
+            this.setState({choices: filteredChoices});
+        } else {
+            var filteredChoice = _.find(this.props.choices, {'id' : this.props.choiceId});
+            this.setState({choices: [filteredChoice]});
+        }
     }
 
     compareValues(first, second, operator){
@@ -63,7 +72,7 @@ class Passage extends React.Component {
 
     render() {
         var choices = this.state.choices.map(function(choice, index) {
-            return <Choice {...choice} key={choice.id} passageId={choice.linkTo.id} handleChoiceClick={this.handleChoiceClick}/>;
+            return <Choice {...choice} key={choice.id} passageId={choice.linkTo.id} isBeingLoaded={this.props.isBeingLoaded} handleChoiceClick={this.handleChoiceClick}/>;
         }.bind(this));
         var title = (this.props.name) ? <h1>{this.props.name}</h1> : '';
         var author = (this.props.author) ? <h3>By {this.props.author}</h3> : '';
@@ -83,4 +92,7 @@ class Passage extends React.Component {
     }
 }
 
+Passage.defaultProps = {
+    isBeingLoaded: false
+}
 export default Passage;

@@ -10,7 +10,7 @@ class Choice extends React.Component {
     }
 
     componentDidMount() {
-        // console.log(this.props);
+        console.log(this.props);
     }
 
     handleChoiceClick(e) {
@@ -27,7 +27,7 @@ class Choice extends React.Component {
         }
     }
     render() {
-        var choice = (this.state.clicked) ?
+        var choice = (this.state.clicked || this.props.isBeingLoaded) ?
                     <div className='read-choice-chosen'>{this.props.text}</div> :
                     <div className='text-center read-choice' onClick={this.handleChoiceClick}>{this.props.text}</div>
         return (
@@ -35,6 +35,5 @@ class Choice extends React.Component {
         )
     }
 }
-
 
 export default Choice;
