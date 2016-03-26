@@ -24,17 +24,16 @@ class Read extends React.Component {
             this.storyData = JSON.parse(localStorage.getItem(this.story + Constants.DEFAULT_STORY_EXT));
 
             this.loadReadLocal();
+            this.restartAttributes();
             if (!this.progress || this.progress.length === 0) {
                 this.addFirstPassage();
             } else {
                 this.setState({startingPassages: this.loadProgress()});
             }
-            // this.addFirstPassage();
         }
     }
 
     addFirstPassage(){
-        //put in the first passage
         var firstPassageId = this.storyData.content.start;
         var firstPassage = _.find(this.storyData.content.passages, {'id' : firstPassageId});
         this.setState((state) => { passages: state.passages.push(firstPassage) });
@@ -57,6 +56,11 @@ class Read extends React.Component {
                 var choiceId = value.choice;
 
                 var originalPassage = _.find(this.storyData.content.passages, {'id' : passageId});
+
+                if (choiceId){
+                    var choice = _.find(originalPassage.choices, {'id' : choiceId});
+                    this.processEvents(choice.linkTo.events, true);
+                }
 
                 if (index == 0 ){
                     return <Passage {...originalPassage}
@@ -88,6 +92,7 @@ class Read extends React.Component {
 
     handleEventOperation(value, operation, addition){
         var numberic = isNumberic(value);
+        addition = isNumberic(addition) ? parseFloat(addition) : addition;
         if (numberic){
             value = parseFloat(value);
         }
@@ -114,6 +119,21 @@ class Read extends React.Component {
         return value;
     }
 
+    processEvents(events, isLoading){
+        var playerAttributes = this.playerAttributes;
+
+        _.forEach(events, function(event) {
+            var matchingAttribute = _.find(playerAttributes, {'name' : event.name});
+            if (matchingAttribute && (matchingAttribute.persistent == 'No' || !isLoading)){
+                var newValue = this.handleEventOperation(matchingAttribute.default, event.modifyBy, event.value);
+                if (newValue){
+                    matchingAttribute.default = newValue;
+                }
+            }
+        }.bind(this))
+        this.saveReadLocal();
+    }
+
     handleChoiceClick(nextPassageId, curPassageId, choiceId, events){
         var passage = _.find(this.storyData.content.passages, {'id' : nextPassageId});
         if (this.progress.length > 0 ){
@@ -124,17 +144,7 @@ class Read extends React.Component {
                 choice: choiceId
             })
         }
-
-        var playerAttributes = this.playerAttributes;
-
-        _.forEach(events, function(event) {
-            var matchingAttribute = _.find(playerAttributes, {'name' : event.name});
-            var newValue = this.handleEventOperation(matchingAttribute.default, event.modifyBy, event.value);
-            if (newValue){
-                matchingAttribute.default = newValue;
-            }
-        }.bind(this))
-
+        this.processEvents(events);
         this.setState((state) => { passages: state.passages.push(passage) });
         this.progress.push({
             passage: nextPassageId
@@ -147,15 +157,23 @@ class Read extends React.Component {
         localStorage.setItem(this.story + Constants.DEFAULT_READ_ATTR_EXT, JSON.stringify(this.playerAttributes));
     }
 
-    restartStory() {
+    restartAttributes(){
         var persistentAttributes = _.filter(this.playerAttributes, function(attribute) {
             return attribute.persistent == 'Yes';
         }.bind(this))
 
         var nonPersistent = JSON.parse(localStorage.getItem(this.story + Constants.DEFAULT_ATTR_EXT)).attributes || [];
+        nonPersistent = _.filter(nonPersistent, function(attribute) {
+            return attribute.persistent == 'No';
+        })
+
         Array.prototype.push.apply(persistentAttributes, nonPersistent);
 
         this.playerAttributes = persistentAttributes;
+    }
+
+    restartStory() {
+        this.restartAttributes();
         this.progress = [];
 
         this.setState({startingPassages: [], passages: []}, function(){
@@ -185,8 +203,7 @@ class Read extends React.Component {
                 <div className='read-actions'>
                     <div className="btn-group-vertical" role="group">
                         <button type="button" className="btn btn-default" onClick={this.restartStory}>Restart</button>
-                        <button type="button" className="btn btn-default">Set Checkpoint</button>
-                        <button type="button" className="btn btn-default">Load</button>
+                        <button type="button" className="btn btn-default">Save Here</button>
                     </div>
                 </div>
                 {this.state.startingPassages}

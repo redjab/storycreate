@@ -29,7 +29,10 @@ class Passage extends React.Component {
             var meetConditions = true;
             _.forEach(linkTo.conditions, function(condition) {
                 var matchingAttribute = _.find(attributes, { 'name' : condition.name});
-                meetConditions = this.compareValues(matchingAttribute.default, condition.value, condition.compare);
+                meetConditions = false;
+                if (matchingAttribute){
+                    meetConditions = this.compareValues(matchingAttribute.default, condition.value, condition.compare);
+                } else return false;
                 if (!meetConditions) return false;
             }.bind(this))
             return meetConditions;
@@ -37,7 +40,6 @@ class Passage extends React.Component {
     }
 
     componentDidMount() {
-        console.log(this.props.isBeingLoaded);
         if (!this.props.isBeingLoaded){
             var filteredChoices = this.filterChoices();
             this.setState({choices: filteredChoices});
@@ -62,7 +64,7 @@ class Passage extends React.Component {
                 return first >= second;
                 break;
             case "<=":
-                return first == second;
+                return first <= second;
                 break;
             default:
                 return false;
