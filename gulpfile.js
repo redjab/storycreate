@@ -24,6 +24,7 @@ var dependencies = [
   'lodash',
   'jointjs',
   'react-bootstrap-table',
+  'classnames',
 ];
 
 var browserifyConfig = {

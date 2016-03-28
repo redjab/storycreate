@@ -3,7 +3,9 @@ import ReactDOM from 'react-dom';
 import { Link } from 'react-router';
 import Passage from  './Read/Passage';
 import Constants from './Write/Constants';
+import AttributesList from './Read/AttributesList';
 import _ from 'lodash';
+import classNames from 'classnames';
 
 function isNumberic(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
@@ -13,12 +15,14 @@ class Read extends React.Component {
     constructor(props) {
         super(props);
         this.handleChoiceClick = this.handleChoiceClick.bind(this);
+        this.toggleDevMode = this.toggleDevMode.bind(this);
         this.restartStory = this.restartStory.bind(this);
         this.state = {passages: [], startingPassages: []};
     }
 
     componentDidMount() {
         var isPreview = this.props.params.isPreview;
+        this.setState({isPreview: isPreview});
         if (isPreview == 1){
             this.story = this.props.params.story;
             this.storyData = JSON.parse(localStorage.getItem(this.story + Constants.DEFAULT_STORY_EXT));
@@ -31,6 +35,9 @@ class Read extends React.Component {
                 this.setState({startingPassages: this.loadProgress()});
             }
         }
+    }
+    toggleDevMode(){
+        this.setState({isPreview: !this.state.isPreview});
     }
 
     addFirstPassage(){
@@ -197,11 +204,17 @@ class Read extends React.Component {
             else return <Passage {...passage} attributes={this.playerAttributes} key={passage.id} handleChoiceClick={this.handleChoiceClick}/>;
         }.bind(this))
 
+        var attributesList = (this.state.isPreview) ? <AttributesList attributes={this.playerAttributes}/> : '';
+
         return (
-            <div className='read-container'>
+            <div className={classNames('read-container', {'read-preview': this.state.isPreview})}>
             <div className="main-content container">
+                {attributesList}
                 <div className='read-actions'>
                     <div className="btn-group-vertical" role="group">
+                        <button type="button" className="btn btn-default" onClick={this.toggleDevMode}>
+                            {(this.state.isPreview) ? 'Read Mode' : 'Debug Mode' }
+                        </button>
                         <button type="button" className="btn btn-default" onClick={this.restartStory}>Restart</button>
                         <button type="button" className="btn btn-default">Save Here</button>
                     </div>

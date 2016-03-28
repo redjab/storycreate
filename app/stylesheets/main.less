@@ -45,7 +45,6 @@ footer a {
   background-image: url("../img/homebackground.jpg");
   background-position: 50% 0%;
   height:350px;
-  padding-top: 50px;
 }
 
 .front-banner a {
@@ -375,29 +374,108 @@ footer a {
   display: block;
   margin: 0 auto;
 }
+.read-passage .choice-container {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border: none;
+  /*text-align: center;*/
+}
+
+.read-passage .choice-container ~ .choice-container {
+  border-top: 1px solid #ECECEC;
+}
+
+.one-choice {
+  display: block;
+}
 
 .read-choice {
-  padding-top: 10px;
   font-size: 22px;
   font-style: italic;
   cursor: pointer;
+  text-align: center;
 }
 
 .read-choice:hover {
   color: gray;
 }
 
-.read-choice-chosen {
+.chosen-choice, .not-chosen-choice {
   font-style: italic;
   font-weight: bold;
   color: gray;
-  padding-top: 10px;
 }
 
+.not-chosen-choice {
+  text-decoration: line-through;
+}
+
+.unmatched-choice, .not-chosen-choice {
+  display: none;
+}
+.unmatched-choice {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.condition-warning {
+  font-style: italic;
+  font-size: 10px;
+  color: red;
+}
+
+.read-preview .unmatched-choice, .read-preview .not-chosen-choice{
+  display: block;
+  color: gray;
+}
 .read-actions {
   position: fixed;
+  box-shadow: 4px 2px 8px -1px rgba(0, 0, 0, 0.5);
 }
 
 .read-actions .btn {
   border-radius: 0px !important;
+}
+
+.read-preview .attributes-list {
+  display: block;
+}
+
+.attributes-list {
+  display: none;
+  padding: 5px 20px 20px;
+  background: white;
+  position: fixed;
+  max-height: 500px;
+  overflow-y: scroll;
+  right: 0;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.attributes-list a:hover {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.conditions-events-container {
+  text-align: center;
+/*  margin-bottom: -20px;
+*/}
+
+.conditions-events-list {
+  display: none;
+}
+
+.conditions-events-list p {
+  margin: 0px;
+  padding: 0px;
+}
+
+.read-preview .conditions-events-list {
+  display: inline-block;
+  cursor: pointer;
+  /*background: #BDBDBD;*/
+  padding: 5px;
+  font-size: 10px;
+  font-family: sans-serif;
+  vertical-align: top;
 }
