@@ -53,6 +53,7 @@ class Constants {
                 };
         this.DEFAULT_READ_PROGRESS_EXT = "_read";
         this.DEFAULT_READ_ATTR_EXT = "_readAttrs";
+        this.DEFAULT_READ_CHECKPOINT_EXT = "_checkpoints";
     }
 }
 

@@ -18,7 +18,8 @@ class Choice extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-      return this.props.chosenOneChoice != nextProps.chosenOneChoice || this.state.clicked != nextState.clicked;
+      return this.props.chosenOneChoice != nextProps.chosenOneChoice ||
+                this.state.clicked != nextState.clicked;
     }
 
     matchConditions(){
