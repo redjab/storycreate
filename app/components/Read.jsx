@@ -18,12 +18,14 @@ class Read extends React.Component {
         this.handleSaveHereClick = this.handleSaveHereClick.bind(this);
         this.toggleDevMode = this.toggleDevMode.bind(this);
         this.restartStory = this.restartStory.bind(this);
+        this.hardRestartStory = this.hardRestartStory.bind(this);
         this.rewindHere = this.rewindHere.bind(this);
         this.state = {passages: [], startingPassages: []};
     }
 
     componentDidMount() {
         var isPreview = this.props.params.isPreview;
+        this.isPreview = isPreview;
         this.setState({isPreview: isPreview});
         if (isPreview == 1){
             this.story = this.props.params.story;
@@ -149,7 +151,7 @@ class Read extends React.Component {
             var matchingAttribute = _.find(playerAttributes, {'name' : event.name});
             if (matchingAttribute && (matchingAttribute.persistent == 'No' || !isLoading)){
                 var newValue = this.handleEventOperation(matchingAttribute.default, event.modifyBy, event.value);
-                if (newValue){
+                if (newValue !== undefined){
                     matchingAttribute.default = newValue;
                 }
             }
@@ -260,6 +262,19 @@ class Read extends React.Component {
         this.saveReadLocal();
     }
 
+    hardRestartStory(){
+        this.playerAttributes = JSON.parse(localStorage.getItem(this.story + Constants.DEFAULT_ATTR_EXT)).attributes;
+        this.progress = [];
+        this.checkPoints = [];
+
+        this.setState({startingPassages: [], passages: []}, function(){
+            this.addFirstPassage();
+        }.bind(this));
+
+        this.saveReadLocal();
+
+    }
+
     render() {
         var passages = this.state.passages.map(function(passage) {
             if (passage.id === this.storyData.content.start){
@@ -284,19 +299,23 @@ class Read extends React.Component {
                 handleChoiceClick={this.handleChoiceClick}/>;
             }
         }.bind(this))
-        console.log("rerendering");
 
         var attributesList = (this.state.isPreview) ? <AttributesList attributes={this.playerAttributes}/> : '';
+        var devOptions = (this.isPreview) ?
+                        <div className="btn-group-vertical" role="group">
+                            <button type="button" className="btn btn-default" onClick={this.toggleDevMode}>
+                                {(this.state.isPreview) ? 'Read Mode' : 'Debug Mode' }
+                            </button>
+                            <button type="button" className="btn btn-default" onClick={this.hardRestartStory}>Hard Restart</button>
+                        </div> : '';
 
         return (
             <div className={classNames('read-container', {'read-preview': this.state.isPreview})}>
             <div className="main-content container">
                 {attributesList}
                 <div className='read-actions'>
+                    {devOptions}
                     <div className="btn-group-vertical" role="group">
-                        <button type="button" className="btn btn-default" onClick={this.toggleDevMode}>
-                            {(this.state.isPreview) ? 'Read Mode' : 'Debug Mode' }
-                        </button>
                         <button type="button" className="btn btn-default" onClick={this.restartStory}>Restart</button>
                         <button type="button" className="btn btn-default" onClick={this.handleSaveHereClick}>Save Here</button>
                     </div>
